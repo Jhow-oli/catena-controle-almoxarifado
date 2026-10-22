@@ -1,0 +1,664 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="layout">
+
+    <!-- MENU LATERAL -->
+    <aside class="sidebar"> 
+        
+        <!-- LOGO CATENA --> 
+
+         <div class="sidebar-logo"> 
+            <img 
+                src="{{ url_for('static', filename='img/Catena logo.jpg') }}"
+                alt="Catena Engenharia" 
+                > 
+            </div> 
+            
+            <!-- NOME DO EMPRESA --> 
+             
+            <header class="sidebar-logo"> 
+                
+                <div> 
+                    CATENA ENGENHARIA 
+                </div>
+            </header> 
+            
+            <nav> 
+                
+                <a href="{{ url_for('dashboard.index') }}"> 
+                    🏠 Início 
+                </a> 
+                
+                <a href="{{ url_for('materiais.index') }}"> 
+                    📦 Materiais
+                </a> 
+                
+                <a href="{{ url_for('veiculos.index') }}"> 
+                    🚚 Veículos 
+                </a> 
+                
+                <a href="{{ url_for('colaboradores.index') }}"> 
+                    👷 Colaboradores 
+                </a> 
+                
+                <a href="{{ url_for('usuarios.index') }}"> 
+                    👤 Usuários 
+                </a> 
+                
+                <a href="{{ url_for('movimentacoes.index') }}"> 
+                    📋 Movimentação de material 
+                </a> 
+                
+                <a href="#"> 
+                    📋 Listas 
+                </a> 
+                
+                <a href="#"> 
+                    📄 Notas Fiscais 
+                </a> 
+
+                <a href="#"> 
+                    🚛 Manifestos 
+                </a> 
+                
+                <a href="{{ url_for('relatorios.index') }}">
+                    📊 Relatórios 
+                </a> 
+                
+                <a href="#"> 
+                    ⚙️ Configurações 
+                </a> 
+            </nav> 
+    </aside>
+
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="main-content">
+
+        <!-- TOPO -->
+        <header class="topbar">
+
+            <div>
+                <strong>
+                    Controle de Almoxarifado
+                </strong>
+            </div>
+
+            <div class="user-area">
+
+                <span>
+                    👤 {{ current_user.nome }}
+                </span>
+
+                <a
+                    href="{{ url_for('auth.logout') }}"
+                    class="logout-button"
+                >
+                    Sair
+                </a>
+
+            </div>
+
+        </header>
+
+
+        <!-- CONTEÚDO -->
+        <section class="dashboard">
+
+            <div class="page-header">
+
+                <div>
+
+                    <h1>
+                        Visualizar Movimentação
+                    </h1>
+
+                    <p>
+                        Consulte os dados da movimentação e os materiais registrados.
+                    </p>
+
+                </div>
+
+                <a
+                    href="{{ url_for('movimentacoes.index') }}"
+                    class="button-secondary"
+                >
+                    ← Voltar
+                </a>
+
+            </div>
+
+
+            <!-- DADOS DA MOVIMENTAÇÃO -->
+            <div class="table-container">
+
+                <table>
+
+                    <tbody>
+
+                        <tr>
+
+                            <th>
+                                {% if movimentacao.tipo == "ENTRADA" %}
+                                        Número da Entrada
+                                    {% else %}
+                                        Ordem de Serviço
+                                    {% endif %}
+                            </th>
+
+                            <td>
+                                {{ movimentacao.numero_os or ("#" ~ movimentacao.id) }}
+                            </td>
+
+                        </tr>
+
+
+                        <tr>
+
+                            <th>
+                                Data
+                            </th>
+
+                            <td>
+                                {{ movimentacao.data_movimentacao.strftime("%d/%m/%Y %H:%M") }}
+                            </td>
+
+                        </tr>
+
+
+                        <tr>
+
+                            <th>
+                                Tipo
+                            </th>
+
+                            <td>
+
+                                {% if movimentacao.tipo == "SAIDA" %}
+
+                                    <span class="status-inactive">
+                                        SAÍDA
+                                    </span>
+
+                                {% elif movimentacao.tipo == "ENTRADA" %}
+
+                                    <span class="status-active">
+                                        ENTRADA
+                                    </span>
+
+                                {% elif movimentacao.tipo == "RETORNO" %}
+
+                                    <span class="status-active">
+                                        RETORNO
+                                    </span>
+
+                                {% elif movimentacao.tipo == "CONSUMO" %}
+
+                                    <span class="status-active">
+                                        CONSUMO
+                                    </span>
+
+                                {% else %}
+
+                                    <span>
+                                        {{ movimentacao.tipo }}
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+
+                        <tr>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <td>
+
+                                {% if movimentacao.status == "ABERTA" %}
+
+                                    <span class="status-active">
+                                        Aberta
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="status-inactive">
+                                        {{ movimentacao.status }}
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+
+                        <tr>
+
+                            <th>
+                                Usuário responsável
+                            </th>
+
+                            <td>
+
+                                {% if movimentacao.usuario %}
+
+                                    {{ movimentacao.usuario.nome }}
+
+                                {% else %}
+
+                                    -
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+
+                        <tr>
+
+                            <th>
+                                Colaborador
+                            </th>
+
+                            <td>
+
+                                {% if movimentacao.colaborador %}
+
+                                    {{ movimentacao.colaborador.nome }}
+
+                                {% else %}
+
+                                    -
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+
+                        <tr>
+
+                            <th>
+                                Veículo
+                            </th>
+
+                            <td>
+
+                                {% if movimentacao.veiculo %}
+
+                                    {{ movimentacao.veiculo.marca }}
+                                    {{ movimentacao.veiculo.modelo }}
+                                    -
+                                    {{ movimentacao.veiculo.placa }}
+
+                                {% else %}
+
+                                    -
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+
+                        <tr>
+
+                            <th>
+                                Destino
+                            </th>
+
+                            <td>
+                                {{ movimentacao.destino or "-" }}
+                            </td>
+
+                        </tr>
+
+
+                        <tr>
+
+                            <th>
+                                Observações
+                            </th>
+
+                            <td>
+                                {{ movimentacao.observacoes or "-" }}
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <!-- MOVIMENTAÇÃO DE ORIGEM -->
+
+            {% if movimentacao.tipo in ["RETORNO", "CONSUMO"]
+                and movimentacao.movimentacao_origem_id %}
+
+            <div class="page-header">
+
+                <div>
+                    <h2>Movimentação de origem</h2>
+
+                    <p>
+                        Este registro está vinculado à saída
+                        nº {{ movimentacao.movimentacao_origem_id }}.Este registro está vinculado à Ordem de Serviço
+                        {{ movimentacao.movimentacao_origem.numero_os
+                            or ("#" ~ movimentacao.movimentacao_origem_id) }}.
+                    </p>
+                </div>
+
+                <a
+                    href="{{ url_for(
+                        'movimentacoes.visualizar',
+                        id=movimentacao.movimentacao_origem_id
+                    ) }}"
+                    class="button-secondary"
+                >
+                    Visualizar saída original
+                </a>
+
+            </div>
+
+            {% endif %}
+
+            <!-- MATERIAIS -->
+            <div class="page-header">
+
+                <div>
+
+                    <h2>
+                        Materiais
+                    </h2>
+
+                    <p>
+                        Materiais registrados nesta movimentação.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Código
+                            </th>
+
+                            <th>
+                                Material
+                            </th>
+
+                            <th>
+                                Unidade
+                            </th>
+
+                            <th>
+                                Recebido
+                            </th>
+
+                            <th>
+                                Retirado
+                            </th>
+
+                            <th>
+                                Retornado
+                            </th>
+
+                            <th>
+                                Consumido
+                            </th>
+
+                            <th>
+                                Pendente
+                            </th>
+
+                            <th>
+                                Observação
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for dados in itens_visualizacao %}
+
+                            <tr>
+
+                                <td>
+                                    {{ dados.item.material.codigo }}
+                                </td>
+
+                                <td>
+                                    {{ dados.item.material.nome }}
+                                </td>
+
+                                <td>
+                                    {{ dados.item.material.unidade }}
+                                </td>
+
+                                <td>
+                                    {{ "%.3f"|format(dados.quantidade_recebida) }}
+                                </td>
+
+                                <td>
+                                    {{ "%.3f"|format(
+                                        dados.quantidade_retirada
+                                    ) }}
+                                </td>
+
+                                <td>
+                                    {{ "%.3f"|format(
+                                        dados.quantidade_retorno
+                                    ) }}
+                                </td>
+
+                                <td>
+                                    {{ "%.3f"|format(
+                                        dados.quantidade_consumida
+                                    ) }}
+                                </td>
+
+                                <td>
+                                    {{ "%.3f"|format(
+                                        dados.quantidade_pendente
+                                    ) }}
+                                </td>
+
+                                <td>
+                                    {{ dados.item.observacoes or "-" }}
+                                </td>
+
+                            </tr>
+
+                        {% else %}
+
+                            <tr>
+
+                                <td
+                                    colspan="8"
+                                    style="text-align:center; padding:30px;"
+                                >
+                                    Nenhum material registrado nesta movimentação.
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <!-- HISTÓRICO DE MOVIMENTAÇÕES VINCULADAS -->
+
+            {% if movimentacao.tipo == "SAIDA" %}
+
+            <div class="page-header">
+
+                <div>
+                    <h2>
+                        Histórico de movimentações vinculadas
+                    </h2>
+
+                    <p>
+                        Consulte os retornos e consumos registrados
+                        para esta saída.
+                    </p>
+                </div>
+
+            </div>
+
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+                        <tr>
+                            <th>Movimentação</th>
+                            <th>Data</th>
+                            <th>Tipo</th>
+                            <th>Quantidade</th>
+                            <th>Status</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for vinculada in movimentacoes_vinculadas %}
+
+                        <tr>
+
+                            <td>
+                                {{ vinculada.numero_os or ("#" ~ vinculada.id) }}
+                            </td>
+
+                            <td>
+                                {{ vinculada.data_movimentacao.strftime("%d/%m/%Y %H:%M") }}
+                            </td>
+
+                            <td>
+
+                                {% if vinculada.tipo == "CONSUMO" %}
+
+                                    <span class="status-inactive">
+                                        CONSUMO
+                                    </span>
+
+                                {% elif vinculada.tipo == "RETORNO" %}
+
+                                    <span class="status-active">
+                                        RETORNO
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+
+                                {% for item in vinculada.itens %}
+
+                                    <div>
+                                        {{ item.material.nome }}:
+
+                                        {% if vinculada.tipo == "CONSUMO" %}
+
+                                            {{ "%.3f"|format(item.quantidade_consumida) }}
+
+                                        {% else %}
+
+                                            {{ "%.3f"|format(item.quantidade_retorno) }}
+
+                                        {% endif %}
+
+                                        {{ item.material.unidade }}
+                                    </div>
+
+                                {% endfor %}
+
+                            </td>
+
+                            <td>
+                                {{ vinculada.status }}
+                            </td>
+
+                            <td>
+
+                                <a
+                                    href="{{ url_for('movimentacoes.visualizar', id=vinculada.id) }}"
+                                    class="button-secondary"
+                                >
+                                    Visualizar
+                                </a>
+
+                            </td>
+
+                        </tr>
+
+                        {% else %}
+
+                        <tr>
+                            <td
+                                colspan="6"
+                                style="text-align: center; padding: 30px;"
+                            >
+                                Nenhum retorno ou consumo registrado
+                                para esta saída.
+                            </td>
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            {% endif %}
+            <!-- AÇÕES -->
+            <div class="form-actions">
+
+                <a
+                    href="{{ url_for('movimentacoes.index') }}"
+                    class="button-secondary"
+                >
+                    ← Voltar para Entradas e Saídas
+                </a>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+{% endblock %}

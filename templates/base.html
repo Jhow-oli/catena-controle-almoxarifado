@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Controle de Almoxarifado
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+
+    <style>
+        .flash-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            width: min(400px, calc(100% - 40px));
+        }
+
+        .flash-message {
+            padding: 14px 18px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .flash-danger {
+            background-color: #f8d7da;
+            color: #842029;
+            border-color: #f5c2c7;
+        }
+
+        .flash-success {
+            background-color: #d1e7dd;
+            color: #0f5132;
+            border-color: #badbcc;
+        }
+
+        .flash-warning {
+            background-color: #fff3cd;
+            color: #664d03;
+            border-color: #ffecb5;
+        }
+
+        .flash-info {
+            background-color: #cff4fc;
+            color: #055160;
+            border-color: #b6effb;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container" role="alert">
+
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    {% block content %}
+    {% endblock %}
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const mensagens = document.querySelectorAll(
+                ".flash-message"
+            );
+
+            mensagens.forEach(function (mensagem) {
+
+                setTimeout(function () {
+
+                    mensagem.style.transition =
+                        "opacity 0.5s ease";
+
+                    mensagem.style.opacity = "0";
+
+                    setTimeout(function () {
+                        mensagem.remove();
+                    }, 500);
+
+                }, 5000);
+
+            });
+
+        });
+    </script>
+
+</body>
+
+</html>
+
+</body>
+
+</html>

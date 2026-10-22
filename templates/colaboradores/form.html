@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="layout">
+
+    <!-- MENU LATERAL -->
+    <aside class="sidebar"> 
+        
+        <!-- LOGO CATENA --> 
+
+         <div class="sidebar-logo"> 
+            <img 
+                src="{{ url_for('static', filename='img/Catena logo.jpg') }}"
+                alt="Catena Engenharia" 
+                > 
+            </div> 
+            
+            <!-- NOME DO EMPRESA --> 
+             
+            <header class="sidebar-logo"> 
+                
+                <div> 
+                    CATENA ENGENHARIA 
+                </div>
+            </header> 
+            
+            <nav> 
+                
+                <a href="{{ url_for('dashboard.index') }}"> 
+                    🏠 Início 
+                </a> 
+                
+                <a href="{{ url_for('materiais.index') }}"> 
+                    📦 Materiais
+                </a> 
+                
+                <a href="{{ url_for('veiculos.index') }}"> 
+                    🚚 Veículos 
+                </a> 
+                
+                <a href="{{ url_for('colaboradores.index') }}"> 
+                    👷 Colaboradores 
+                </a> 
+                
+                <a href="{{ url_for('usuarios.index') }}"> 
+                    👤 Usuários 
+                </a> 
+                
+                <a href="{{ url_for('movimentacoes.index') }}"> 
+                    📋 Movimentação de material 
+                </a> 
+                
+                <a href="#"> 
+                    📋 Listas 
+                </a> 
+                
+                <a href="#"> 
+                    📄 Notas Fiscais 
+                </a> 
+
+                <a href="#"> 
+                    🚛 Manifestos 
+                </a> 
+                
+                <a href="{{ url_for('relatorios.index') }}">
+                    📊 Relatórios 
+                </a> 
+                
+                <a href="#"> 
+                    ⚙️ Configurações 
+                </a> 
+            </nav> 
+        </aside>
+
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="main-content">
+
+        <!-- TOPO -->
+        <header class="topbar">
+
+            <div>
+                <strong>
+                    Controle de Almoxarifado
+                </strong>
+            </div>
+
+            <div class="user-area">
+
+                <span>
+                    👤 {{ current_user.nome }}
+                </span>
+
+                <a
+                    href="{{ url_for('auth.logout') }}"
+                    class="logout-button"
+                >
+                    Sair
+                </a>
+
+            </div>
+
+        </header>
+
+
+        <!-- FORMULÁRIO -->
+        <section class="dashboard">
+
+            <div class="page-header">
+
+                <div>
+
+                    <h1>
+
+                        {% if colaborador %}
+                            Editar colaborador
+                        {% else %}
+                            Novo colaborador
+                        {% endif %}
+
+                    </h1>
+
+                    <p>
+                        Preencha os dados do colaborador.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- MENSAGENS -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+
+                {% for category, message in messages %}
+
+                    <div class="message {{ category }}">
+                        {{ message }}
+                    </div>
+
+                {% endfor %}
+
+            {% endwith %}
+
+
+            <!-- CARD -->
+            <div class="form-card">
+
+                <form method="POST">
+
+                    <div class="form-grid">
+
+
+                        <!-- NOME -->
+                        <div class="form-group form-full">
+
+                            <label for="nome">
+                                Nome completo *
+                            </label>
+
+                            <input
+                                type="text"
+                                id="nome"
+                                name="nome"
+                                value="{{ colaborador.nome if colaborador else '' }}"
+                                placeholder="Digite o nome completo"
+                                required
+                            >
+
+                        </div>
+
+
+                        <!-- FUNÇÃO -->
+                        <div class="form-group">
+
+                            <label for="funcao">
+                                Função *
+                            </label>
+
+                            <input
+                                type="text"
+                                id="funcao"
+                                name="funcao"
+                                value="{{ colaborador.funcao if colaborador else '' }}"
+                                placeholder="Ex.: Técnico Eletrotécnico"
+                                required
+                            >
+
+                        </div>
+
+
+                        <!-- CATEGORIA CNH -->
+                        <div class="form-group">
+
+                            <label for="categoria_cnh">
+                                Categoria da CNH
+                            </label>
+
+                            <select
+                                id="categoria_cnh"
+                                name="categoria_cnh"
+                            >
+
+                                <option value="">
+                                    Não informado
+                                </option>
+
+                                <option
+                                    value="A"
+                                    {% if colaborador and colaborador.categoria_cnh == "A" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    A
+                                </option>
+
+                                <option
+                                    value="B"
+                                    {% if colaborador and colaborador.categoria_cnh == "B" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    B
+                                </option>
+
+                                <option
+                                    value="AB"
+                                    {% if colaborador and colaborador.categoria_cnh == "AB" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    AB
+                                </option>
+
+                                <option
+                                    value="C"
+                                    {% if colaborador and colaborador.categoria_cnh == "C" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    C
+                                </option>
+
+                                <option
+                                    value="D"
+                                    {% if colaborador and colaborador.categoria_cnh == "D" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    D
+                                </option>
+
+                                <option
+                                    value="E"
+                                    {% if colaborador and colaborador.categoria_cnh == "E" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    E
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <!-- VALIDADE CNH -->
+                        <div class="form-group">
+
+                            <label for="validade_cnh">
+                                Validade da CNH
+                            </label>
+
+                            <input
+                                type="date"
+                                id="validade_cnh"
+                                name="validade_cnh"
+                                value="{{ colaborador.validade_cnh.strftime('%Y-%m-%d') if colaborador and colaborador.validade_cnh else '' }}"
+                            >
+
+                        </div>
+
+
+                    </div>
+
+
+                    <!-- BOTÕES -->
+                    <div class="form-actions">
+
+                        <a
+                            href="{{ url_for('colaboradores.index') }}"
+                            class="button-secondary"
+                        >
+                            Cancelar
+                        </a>
+
+                        <button
+                            type="submit"
+                            class="button-primary"
+                        >
+
+                            {% if colaborador %}
+                                💾 Salvar alterações
+                            {% else %}
+                                💾 Cadastrar colaborador
+                            {% endif %}
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+{% endblock %}

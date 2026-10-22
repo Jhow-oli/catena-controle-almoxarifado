@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="layout">
+
+    <!-- MENU LATERAL -->
+    <aside class="sidebar"> 
+        
+        <!-- LOGO CATENA --> 
+
+         <div class="sidebar-logo"> 
+            <img 
+                src="{{ url_for('static', filename='img/Catena logo.jpg') }}"
+                alt="Catena Engenharia" 
+                > 
+            </div> 
+            
+            <!-- NOME DO EMPRESA --> 
+             
+            <header class="sidebar-logo"> 
+                
+                <div> 
+                    CATENA ENGENHARIA 
+                </div>
+            </header> 
+            
+            <nav> 
+                
+                <a href="{{ url_for('dashboard.index') }}"> 
+                    🏠 Início 
+                </a> 
+                
+                <a href="{{ url_for('materiais.index') }}"> 
+                    📦 Materiais
+                </a> 
+                
+                <a href="{{ url_for('veiculos.index') }}"> 
+                    🚚 Veículos 
+                </a> 
+                
+                <a href="{{ url_for('colaboradores.index') }}"> 
+                    👷 Colaboradores 
+                </a> 
+                
+                <a href="{{ url_for('usuarios.index') }}"> 
+                    👤 Usuários 
+                </a> 
+                
+                <a href="{{ url_for('movimentacoes.index') }}"> 
+                    📋 Movimentação de material 
+                </a> 
+                
+                <a href="#"> 
+                    📋 Listas 
+                </a> 
+                
+                <a href="#"> 
+                    📄 Notas Fiscais 
+                </a> 
+
+                <a href="#"> 
+                    🚛 Manifestos 
+                </a> 
+                
+                <a href="{{ url_for('relatorios.index') }}">
+                    📊 Relatórios 
+                </a> 
+                
+                <a href="#"> 
+                    ⚙️ Configurações 
+                </a> 
+            </nav> 
+    </aside>
+
+
+    <!-- CONTEÚDO -->
+    <main class="main-content">
+
+        <!-- TOPO -->
+        <header class="topbar">
+
+            <div>
+                <strong>
+                    Controle de Almoxarifado
+                </strong>
+            </div>
+
+            <div class="user-area">
+
+                <span>
+                    👤 {{ current_user.nome }}
+                </span>
+
+                <a
+                    href="{{ url_for('auth.logout') }}"
+                    class="logout-button"
+                >
+                    Sair
+                </a>
+
+            </div>
+
+        </header>
+
+
+        <!-- FORMULÁRIO -->
+        <section class="dashboard">
+
+            <div class="page-header">
+
+                <div>
+
+                    <h1>
+
+                        {% if veiculo %}
+                            Editar veículo
+                        {% else %}
+                            Novo veículo
+                        {% endif %}
+
+                    </h1>
+
+                    <p>
+                        Preencha os dados do veículo.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- MENSAGENS -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+
+                {% for category, message in messages %}
+
+                    <div class="message {{ category }}">
+                        {{ message }}
+                    </div>
+
+                {% endfor %}
+
+            {% endwith %}
+
+
+            <!-- CARD -->
+            <div class="form-card">
+
+                <form method="POST">
+
+                    <div class="form-grid">
+
+
+                        <!-- MARCA -->
+                        <div class="form-group">
+
+                            <label for="marca">
+                                Marca *
+                            </label>
+
+                            <input
+                                type="text"
+                                id="marca"
+                                name="marca"
+                                value="{{ veiculo.marca if veiculo else '' }}"
+                                placeholder="Ex.: Volkswagen"
+                                required
+                            >
+
+                        </div>
+
+
+                        <!-- MODELO -->
+                        <div class="form-group">
+
+                            <label for="modelo">
+                                Modelo *
+                            </label>
+
+                            <input
+                                type="text"
+                                id="modelo"
+                                name="modelo"
+                                value="{{ veiculo.modelo if veiculo else '' }}"
+                                placeholder="Ex.: Delivery 11.180"
+                                required
+                            >
+
+                        </div>
+
+
+                        <!-- PLACA -->
+                        <div class="form-group">
+
+                            <label for="placa">
+                                Placa *
+                            </label>
+
+                            <input
+                                type="text"
+                                id="placa"
+                                name="placa"
+                                value="{{ veiculo.placa if veiculo else '' }}"
+                                placeholder="Ex.: ABC1D23"
+                                maxlength="10"
+                                style="text-transform: uppercase;"
+                                required
+                            >
+
+                        </div>
+
+
+                        <!-- ANO -->
+                        <div class="form-group">
+
+                            <label for="ano">
+                                Ano
+                            </label>
+
+                            <input
+                                type="number"
+                                id="ano"
+                                name="ano"
+                                value="{{ veiculo.ano if veiculo and veiculo.ano else '' }}"
+                                placeholder="Ex.: 2024"
+                                min="1900"
+                                max="2100"
+                            >
+
+                        </div>
+
+
+                        <!-- TIPO -->
+                        <div class="form-group">
+
+                            <label for="tipo">
+                                Tipo de veículo
+                            </label>
+
+                            <select
+                                id="tipo"
+                                name="tipo"
+                            >
+
+                                <option value="">
+                                    Selecione
+                                </option>
+
+                                <option
+                                    value="Carro"
+                                    {% if veiculo and veiculo.tipo == "Carro" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    Carro
+                                </option>
+
+                                <option
+                                    value="Caminhonete"
+                                    {% if veiculo and veiculo.tipo == "Caminhonete" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    Caminhonete
+                                </option>
+
+                                <option
+                                    value="Van"
+                                    {% if veiculo and veiculo.tipo == "Van" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    Van
+                                </option>
+
+                                <option
+                                    value="Caminhão"
+                                    {% if veiculo and veiculo.tipo == "Caminhão" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    Caminhão
+                                </option>
+
+                                <option
+                                    value="Ônibus"
+                                    {% if veiculo and veiculo.tipo == "Ônibus" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    Ônibus
+                                </option>
+
+                                <option
+                                    value="Outro"
+                                    {% if veiculo and veiculo.tipo == "Outro" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    Outro
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                    </div>
+
+
+                    <!-- BOTÕES -->
+                    <div class="form-actions">
+
+                        <a
+                            href="{{ url_for('veiculos.index') }}"
+                            class="button-secondary"
+                        >
+                            Cancelar
+                        </a>
+
+                        <button
+                            type="submit"
+                            class="button-primary"
+                        >
+                            {% if veiculo %}
+                                💾 Salvar alterações
+                            {% else %}
+                                💾 Cadastrar veículo
+                            {% endif %}
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+{% endblock %}

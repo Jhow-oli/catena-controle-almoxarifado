@@ -1,0 +1,436 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="layout">
+
+    <!-- MENU LATERAL -->
+    <aside class="sidebar"> 
+        
+        <!-- LOGO CATENA --> 
+
+         <div class="sidebar-logo"> 
+            <img 
+                src="{{ url_for('static', filename='img/Catena logo.jpg') }}"
+                alt="Catena Engenharia" 
+                > 
+            </div> 
+            
+            <!-- NOME DO EMPRESA --> 
+             
+            <header class="sidebar-logo"> 
+                
+                <div> 
+                    CATENA ENGENHARIA 
+                </div>
+            </header> 
+            
+            <nav> 
+                
+                <a href="{{ url_for('dashboard.index') }}"> 
+                    🏠 Início 
+                </a> 
+                
+                <a href="{{ url_for('materiais.index') }}"> 
+                    📦 Materiais
+                </a> 
+                
+                <a href="{{ url_for('veiculos.index') }}"> 
+                    🚚 Veículos 
+                </a> 
+                
+                <a href="{{ url_for('colaboradores.index') }}"> 
+                    👷 Colaboradores 
+                </a> 
+                
+                <a href="{{ url_for('usuarios.index') }}"> 
+                    👤 Usuários 
+                </a> 
+                
+                <a href="{{ url_for('movimentacoes.index') }}"> 
+                    📋 Movimentação de material 
+                </a> 
+                
+                <a href="#"> 
+                    📋 Listas 
+                </a> 
+                
+                <a href="#"> 
+                    📄 Notas Fiscais 
+                </a> 
+
+                <a href="#"> 
+                    🚛 Manifestos 
+                </a> 
+                
+                <a href="{{ url_for('relatorios.index') }}">
+                    📊 Relatórios 
+                </a> 
+                
+                <a href="#"> 
+                    ⚙️ Configurações 
+                </a> 
+            </nav> 
+    </aside>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="main-content">
+
+        <header class="topbar">
+
+            <div>
+                <strong>Controle de Almoxarifado</strong>
+            </div>
+
+            <div class="user-area">
+                <span>👤 {{ current_user.nome }}</span>
+
+                <a
+                    href="{{ url_for('auth.logout') }}"
+                    class="logout-button"
+                >
+                    Sair
+                </a>
+            </div>
+
+        </header>
+
+        <section class="dashboard">
+
+            <div class="page-header">
+                <div>
+                    <h1>Relatório de Estoque</h1>
+                    <p>
+                        Consulte as quantidades disponíveis
+                        e os níveis mínimos dos materiais.
+                    </p>
+                </div>
+
+                <a
+                    href="{{ url_for('relatorios.index') }}"
+                    class="button-secondary"
+                >
+                    ← Voltar
+                </a>
+            </div>
+
+            <!-- INDICADORES DO ESTOQUE -->
+            <div class="estoque-indicadores">
+
+                <div class="estoque-indicador">
+                    <h3>Total de Materiais</h3>
+                    <p>{{ total_materiais }}</p>
+                </div>
+
+                <div class="estoque-indicador">
+                    <h3>Estoque Normal</h3>
+                    <p>{{ estoque_normal }}</p>
+                </div>
+
+                <div class="estoque-indicador">
+                    <h3>Estoque Baixo</h3>
+                    <p>{{ estoque_baixo }}</p>
+                </div>
+
+            </div>
+
+            <style>
+                .estoque-indicadores {
+                    display: grid;
+                    grid-template-columns: repeat(3, minmax(0, 1fr));
+                    gap: 16px;
+                    margin-bottom: 24px;
+                }
+
+                .estoque-indicador {
+                    background: white;
+                    padding: 20px;
+                    border-radius: 10px;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+                }
+
+                .estoque-indicador h3 {
+                    font-size: 14px;
+                    margin: 0 0 12px;
+                    color: #555;
+                }
+
+                .estoque-indicador p {
+                    font-size: 28px;
+                    font-weight: bold;
+                    margin: 0;
+                }
+
+                @media (max-width: 650px) {
+                    .estoque-indicadores {
+                        grid-template-columns: 1fr;
+                    }
+                }
+
+            
+            </style>
+            
+            <!-- PESQUISA DE MATERIAIS -->
+            <form method="GET"
+                action="{{ url_for('relatorios.estoque') }}"
+                class="pesquisa-estoque">
+
+                <input
+                    type="text"
+                    name="pesquisa"
+                    value="{{ pesquisa }}"
+                    placeholder="Pesquisar por nome ou código..."
+                    aria-label="Pesquisar materiais"
+                >
+
+                <!-- FILTRO POR SITUAÇÃO -->
+                <select name="situacao" aria-label="Filtrar situação do estoque">
+
+                    <option value="todos"
+                        {% if situacao == "todos" %}selected{% endif %}>
+                        Todos os materiais
+                    </option>
+
+                    <option value="normal"
+                        {% if situacao == "normal" %}selected{% endif %}>
+                        Estoque Normal
+                    </option>
+
+                    <option value="baixo"
+                        {% if situacao == "baixo" %}selected{% endif %}>
+                        Estoque Baixo
+                    </option>
+
+                </select>
+
+                <button
+                    type="submit"
+                    class="botao-pesquisar"
+                >
+                    🔍 Pesquisar
+                </button>
+
+                <a
+                    href="{{ url_for('relatorios.estoque') }}"
+                    class="botao-limpar"
+                >
+                    <span>✕</span> Limpar
+                </a>
+
+                <!-- EXPORTAR RELATÓRIO EM PDF -->
+                <a
+                    href="{{ url_for(
+                        'relatorios.estoque_pdf',
+                        pesquisa=pesquisa,
+                        situacao=situacao
+                    ) }}"
+                    class="botao-exportar-pdf"
+                >
+                    📄 Exportar PDF
+                </a>
+
+            </form>
+
+            <style>
+                .pesquisa-estoque {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 10px;
+                    align-items: center;
+                    margin-bottom: 20px;
+                }
+
+                .pesquisa-estoque input {
+                    flex: 1;
+                    min-width: 200px;
+                    padding: 10px 12px;
+                    border: 1px solid #ccc;
+                    border-radius: 6px;
+                }
+
+                .pesquisa-estoque button {
+                    padding: 10px 16px;
+                    border: none;
+                    border-radius: 6px;
+                    background: #1f4e79;
+                    color: white;
+                    cursor: pointer;
+                }
+
+                .pesquisa-estoque select {
+                    padding: 10px 12px;
+                    border: 1px solid #ccc;
+                    border-radius: 6px;
+                    background: white;
+                    min-width: 170px;
+                }
+
+                .pesquisa-estoque a {
+                    padding: 10px;
+                    text-decoration: none;
+                }
+                
+                .botao-exportar-pdf {
+                    display: inline-block;
+                    padding: 10px 16px;
+                    background: #b91c1c;
+                    color: #ffffff;
+                    text-decoration: none;
+                    border-radius: 6px;
+                    font-weight: 500;
+                }
+
+                .botao-exportar-pdf:hover {
+                    background: #991b1b;
+                    color: white;
+                }
+
+                /* BOTÃO LIMPAR FILTROS */
+                .botao-limpar {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 6px;
+                    padding: 10px 16px;
+                    background-color: #e9ecef;
+                    color: #343a40;
+                    border: 1px solid #ced4da;
+                    border-radius: 6px;
+                    text-decoration: none;
+                    font-size: 14px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                }
+
+                .botao-limpar:hover {
+                    background-color: #dee2e6;
+                    border-color: #adb5bd;
+                    color: #212529;
+                }
+
+                .botao-limpar:active {
+                    background-color: #ced4da;
+                    transform: scale(0.98);
+                }
+
+            /* ALINHAMENTO DOS FILTROS E BOTÕES */
+
+            .pesquisa-estoque {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .pesquisa-estoque input[name="pesquisa"] {
+                flex: 1 1 300px;
+                min-width: 200px;
+            }
+
+            .pesquisa-estoque select {
+                flex: 0 1 180px;
+                min-width: 150px;
+            }
+
+            .pesquisa-estoque .botao-pesquisar,
+            .pesquisa-estoque .botao-limpar,
+            .pesquisa-estoque .botao-exportar-pdf {
+                display: inline-flex;
+                flex: 0 0 auto;
+                width: auto;
+                align-items: center;
+                justify-content: center;
+                padding: 10px 16px;
+                margin: 0;
+                box-sizing: border-box;
+            }
+
+            @media (max-width: 768px) {
+                .pesquisa-estoque input[name="pesquisa"] {
+                    flex: 1 1 100%;
+                }
+
+                .pesquisa-estoque select {
+                    flex: 1 1 160px;
+                }
+            }
+            </style>
+
+            <!-- TABELA DE ESTOQUE -->
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Material</th>
+                            <th>Unidade</th>
+                            <th>Quantidade disponível</th>
+                            <th>Estoque mínimo</th>
+                            <th>Situação</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for material in materiais %}
+
+                        <tr>
+                            <td>{{ material.codigo }}</td>
+
+                            <td>{{ material.nome }}</td>
+
+                            <td>{{ material.unidade }}</td>
+
+                            <td>
+                                {{ "%.3f"|format(material.quantidade) }}
+                            </td>
+
+                            <td>
+                                {{ "%.3f"|format(material.estoque_minimo or 0) }}
+                            </td>
+
+                            <td>
+                                {% if material.estoque_minimo is not none
+                                      and material.quantidade <= material.estoque_minimo %}
+
+                                    <span class="status-inactive">
+                                        Estoque baixo
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="status-active">
+                                        Normal
+                                    </span>
+
+                                {% endif %}
+                            </td>
+                        </tr>
+
+                        {% else %}
+
+                        <tr>
+                            <td colspan="6"
+                                style="text-align:center; padding:30px;">
+                                Nenhum material ativo encontrado.
+                            </td>
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+{% endblock %}

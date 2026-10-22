@@ -1,0 +1,35 @@
+# Ambiente virtual
+venv/
+.venv/
+env/
+
+# Configurações e credenciais
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Banco de dados
+instance/
+*.sqlite
+*.sqlite3
+*.sql
+*.sql.gz
+backups/
+
+# Arquivos gerados
+uploads/
+static/qrcodes/
+
+# Logs e temporários
+*.log
+*.tmp
+
+# Configurações locais do VS Code
+.vscode/

@@ -1,0 +1,336 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="layout">
+
+    <!-- MENU LATERAL -->
+    <aside class="sidebar"> 
+        
+        <!-- LOGO CATENA --> 
+
+         <div class="sidebar-logo"> 
+            <img 
+                src="{{ url_for('static', filename='img/Catena logo.jpg') }}"
+                alt="Catena Engenharia" 
+                > 
+            </div> 
+            
+            <!-- NOME DO EMPRESA --> 
+             
+            <header class="sidebar-logo"> 
+                
+                <div> 
+                    CATENA ENGENHARIA 
+                </div>
+            </header> 
+            
+            <nav> 
+                
+                <a href="{{ url_for('dashboard.index') }}"> 
+                    🏠 Início 
+                </a> 
+                
+                <a href="{{ url_for('materiais.index') }}"> 
+                    📦 Materiais
+                </a> 
+                
+                <a href="{{ url_for('veiculos.index') }}"> 
+                    🚚 Veículos 
+                </a> 
+                
+                <a href="{{ url_for('colaboradores.index') }}"> 
+                    👷 Colaboradores 
+                </a> 
+                
+                <a href="{{ url_for('usuarios.index') }}"> 
+                    👤 Usuários 
+                </a> 
+                
+                <a href="{{ url_for('movimentacoes.index') }}"> 
+                    📋 Movimentação de material 
+                </a> 
+                
+                <a href="#"> 
+                    📋 Listas 
+                </a> 
+                
+                <a href="#"> 
+                    📄 Notas Fiscais 
+                </a> 
+
+                <a href="#"> 
+                    🚛 Manifestos 
+                </a> 
+                
+                <a href="{{ url_for('relatorios.index') }}">
+                    📊 Relatórios 
+                </a> 
+                
+                <a href="#"> 
+                    ⚙️ Configurações 
+                </a> 
+            </nav> 
+    </aside>
+
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="main-content">
+
+        <!-- TOPO -->
+        <header class="topbar">
+
+            <div>
+                <strong>
+                    Controle de Almoxarifado
+                </strong>
+            </div>
+
+            <div class="user-area">
+
+                <span>
+                    👤 {{ current_user.nome }}
+                </span>
+
+                <a
+                    href="{{ url_for('auth.logout') }}"
+                    class="logout-button"
+                >
+                    Sair
+                </a>
+
+            </div>
+
+        </header>
+
+
+        <!-- CONTEÚDO -->
+        <section class="dashboard">
+
+            <div class="page-header">
+
+                <div>
+
+                    <h1>
+                        Veículos
+                    </h1>
+
+                    <p>
+                        Cadastro e controle dos veículos utilizados pela empresa.
+                    </p>
+
+                </div>
+
+                <a
+                    href="{{ url_for('veiculos.novo') }}"
+                    class="button-primary"
+                >
+                    Novo veículo
+                </a>
+
+            </div>
+
+
+            <!-- MENSAGENS -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+
+                {% for category, message in messages %}
+
+                    <div class="message {{ category }}">
+                        {{ message }}
+                    </div>
+
+                {% endfor %}
+
+            {% endwith %}
+
+
+            <!-- PESQUISA -->
+            <div class="search-card">
+
+                <form
+                    method="GET"
+                    class="search-form"
+                >
+
+                    <input
+                        type="text"
+                        name="pesquisa"
+                        value="{{ pesquisa }}"
+                        placeholder="Pesquisar por marca, modelo, placa ou tipo..."
+                    >
+
+                    <button
+                        type="submit"
+                        class="button-primary"
+                    >
+                        🔎 Pesquisar
+                    </button>
+
+                    {% if pesquisa %}
+
+                        <a
+                            href="{{ url_for('veiculos.index') }}"
+                            class="button-secondary"
+                        >
+                            Limpar
+                        </a>
+
+                    {% endif %}
+
+                </form>
+
+            </div>
+
+
+            <!-- TABELA -->
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Marca
+                            </th>
+
+                            <th>
+                                Modelo
+                            </th>
+
+                            <th>
+                                Placa
+                            </th>
+
+                            <th>
+                                Ano
+                            </th>
+
+                            <th>
+                                Tipo
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th>
+                                Ações
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for veiculo in veiculos %}
+
+                            <tr>
+
+                                <td>
+                                    {{ veiculo.marca }}
+                                </td>
+
+                                <td>
+                                    {{ veiculo.modelo }}
+                                </td>
+
+                                <td>
+                                    <strong>
+                                        {{ veiculo.placa }}
+                                    </strong>
+                                </td>
+
+                                <td>
+                                    {{ veiculo.ano or "-" }}
+                                </td>
+
+                                <td>
+                                    {{ veiculo.tipo or "-" }}
+                                </td>
+
+                                <td>
+
+                                    {% if veiculo.ativo %}
+
+                                        <span class="status-active">
+                                            Ativo
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="status-inactive">
+                                            Inativo
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <td>
+
+                                    <a
+                                        href="{{ url_for('veiculos.editar', id=veiculo.id) }}"
+                                        class="button-small"
+                                    >
+                                        ✏️ Editar
+                                    </a>
+
+
+                                    {% if veiculo.ativo %}
+
+                                        <form
+                                            method="POST"
+                                            action="{{ url_for('veiculos.desativar', id=veiculo.id) }}"
+                                            style="display:inline;"
+                                            onsubmit="return confirm('Deseja realmente desativar este veículo?');"
+                                        >
+
+                                            <button
+                                                type="submit"
+                                                class="button-danger-small"
+                                            >
+                                                🚫 Desativar
+                                            </button>
+
+                                        </form>
+
+                                    {% endif %}
+
+                                </td>
+
+                            </tr>
+
+                        {% else %}
+
+                            <tr>
+
+                                <td
+                                    colspan="7"
+                                    style="text-align:center; padding:30px;"
+                                >
+                                    Nenhum veículo cadastrado.
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,9 @@
+Flask
+Flask-SQLAlchemy
+Flask-Login
+PyMySQL
+python-dotenv
+Werkzeug
+qrcode
+Pillow
+reportlab

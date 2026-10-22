@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="login-container">
+
+    <div class="login-card">
+
+        <div class="logo-placeholder">
+            403
+        </div>
+
+        <h1>
+            Acesso negado
+        </h1>
+
+        <p>
+            Você não possui permissão para acessar esta área.
+        </p>
+
+        <a
+            href="{{ url_for('dashboard.index') }}"
+            class="logout-button"
+        >
+            Voltar ao Dashboard
+        </a>
+
+    </div>
+
+</div>
+
+{% endblock %}

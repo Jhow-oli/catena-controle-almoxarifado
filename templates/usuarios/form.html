@@ -1,0 +1,393 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="layout">
+
+    <aside class="sidebar"> 
+        
+        <!-- LOGO CATENA --> 
+
+         <div class="sidebar-logo"> 
+            <img 
+                src="{{ url_for('static', filename='img/Catena logo.jpg') }}"
+                alt="Catena Engenharia" 
+                > 
+            </div> 
+            
+            <!-- NOME DO EMPRESA --> 
+             
+            <header class="sidebar-logo"> 
+                
+                <div> 
+                    CATENA ENGENHARIA 
+                </div>
+            </header> 
+            
+            <nav> 
+                
+                <a href="{{ url_for('dashboard.index') }}"> 
+                    🏠 Início 
+                </a> 
+                
+                <a href="{{ url_for('materiais.index') }}"> 
+                    📦 Materiais
+                </a> 
+                
+                <a href="{{ url_for('veiculos.index') }}"> 
+                    🚚 Veículos 
+                </a> 
+                
+                <a href="{{ url_for('colaboradores.index') }}"> 
+                    👷 Colaboradores 
+                </a> 
+                
+                <a href="{{ url_for('usuarios.index') }}"> 
+                    👤 Usuários 
+                </a> 
+                
+                <a href="{{ url_for('movimentacoes.index') }}"> 
+                    📋 Movimentação de material 
+                </a> 
+                
+                <a href="#"> 
+                    📋 Listas 
+                </a> 
+                
+                <a href="#"> 
+                    📄 Notas Fiscais 
+                </a> 
+
+                <a href="#"> 
+                    🚛 Manifestos 
+                </a> 
+                
+                <a href="{{ url_for('relatorios.index') }}">
+                    📊 Relatórios 
+                </a> 
+                
+                <a href="#"> 
+                    ⚙️ Configurações 
+                </a> 
+            </nav> 
+    </aside>
+
+
+    <main class="main-content">
+
+        <header class="topbar">
+
+            <div>
+
+                <h1>
+                    {% if usuario %}
+                        Editar usuário
+                    {% else %}
+                        Novo usuário
+                    {% endif %}
+                </h1>
+
+            </div>
+
+
+            <div class="user-area">
+
+                <span>
+                    {{ current_user.nome }}
+                </span>
+
+                <a href="{{ url_for('auth.logout') }}">
+                    Sair
+                </a>
+
+            </div>
+
+        </header>
+
+
+        <section class="dashboard">
+
+            <div class="page-header">
+
+                <div>
+
+                    <h2>
+                        {% if usuario %}
+                            Editar usuário
+                        {% else %}
+                            Novo usuário
+                        {% endif %}
+                    </h2>
+
+                    <p>
+                        Cadastre o acesso ao sistema.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            {% with messages = get_flashed_messages(
+                with_categories=true
+            ) %}
+
+                {% if messages %}
+
+                    {% for category, message in messages %}
+
+                        <div class="message {{ category }}">
+
+                            {{ message }}
+
+                        </div>
+
+                    {% endfor %}
+
+                {% endif %}
+
+            {% endwith %}
+
+
+            <form method="POST">
+
+                <div class="form-card">
+
+                    <h3>Dados do usuário</h3>
+
+
+                    <div class="form-grid">
+
+
+                        <div class="form-group">
+
+                            <label for="nome">
+                                Nome
+                            </label>
+
+                            <input
+                                type="text"
+                                id="nome"
+                                name="nome"
+                                maxlength="150"
+                                value="{{ usuario.nome if usuario else '' }}"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="usuario">
+                                Usuário
+                            </label>
+
+                            <input
+                                type="text"
+                                id="usuario"
+                                name="usuario"
+                                maxlength="50"
+                                value="{{ usuario.usuario if usuario else '' }}"
+                                required
+                            >
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label for="email">
+                                E-mail
+                            </label>
+
+                            <input
+                                type="email"
+                                id="email"
+                                name="email"
+                                maxlength="150"
+                                value="{{ usuario.email if usuario and usuario.email else '' }}"
+                                placeholder="exemplo@empresa.com"
+                                autocomplete="email"
+                            >
+
+                            <small>
+                                Utilizado para recuperação de senha.
+                            </small>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="senha">
+                                Senha
+                            </label>
+
+                            <input
+                                type="password"
+                                id="senha"
+                                name="senha"
+                                minlength="4"
+                                {% if not usuario %}required{% endif %}
+                            >
+
+                            {% if usuario %}
+
+                                <small>
+                                    Deixe em branco para manter a senha atual.
+                                </small>
+
+                            {% endif %}
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="perfil">
+                                Perfil
+                            </label>
+
+                            <select
+                                id="perfil"
+                                name="perfil"
+                                required
+                            >
+
+                                <option
+                                    value="ADMIN"
+                                    {% if usuario and usuario.perfil == "ADMIN" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    Administrador
+                                </option>
+
+                                <option
+                                    value="COLABORADOR"
+                                    {% if not usuario or usuario.perfil == "COLABORADOR" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    Colaborador
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="colaborador_id">
+                                Colaborador vinculado
+                            </label>
+
+                            <select
+                                id="colaborador_id"
+                                name="colaborador_id"
+                            >
+
+                                <option value="">
+                                    Nenhum
+                                </option>
+
+                                {% for colaborador in colaboradores %}
+
+                                    <option
+                                        value="{{ colaborador.id }}"
+                                        {% if usuario and usuario.colaborador_id == colaborador.id %}
+                                            selected
+                                        {% endif %}
+                                    >
+
+                                        {{ colaborador.nome }}
+                                        -
+                                        {{ colaborador.funcao }}
+
+                                    </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                            <small>
+                                Vincule o usuário ao colaborador correspondente.
+                            </small>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="ativo">
+                                Status
+                            </label>
+
+                            <select
+                                id="ativo"
+                                name="ativo"
+                                required
+                            >
+
+                                <option
+                                    value="1"
+                                    {% if not usuario or usuario.ativo %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    Ativo
+                                </option>
+
+                                <option
+                                    value="0"
+                                    {% if usuario and not usuario.ativo %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    Inativo
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-actions">
+
+                    <a
+                        href="{{ url_for('usuarios.index') }}"
+                        class="button-secondary"
+                    >
+                        Cancelar
+                    </a>
+
+
+                    <button
+                        type="submit"
+                        class="button-primary"
+                    >
+
+                        {% if usuario %}
+                            Salvar alterações
+                        {% else %}
+                            Criar usuário
+                        {% endif %}
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </section>
+
+    </main>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,1422 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="layout">
+
+    <!-- MENU LATERAL -->
+    <aside class="sidebar"> 
+        
+        <!-- LOGO CATENA --> 
+
+         <div class="sidebar-logo"> 
+            <img 
+                src="{{ url_for('static', filename='img/Catena logo.jpg') }}"
+                alt="Catena Engenharia" 
+                > 
+            </div> 
+            
+            <!-- NOME DO EMPRESA --> 
+             
+            <header class="sidebar-logo"> 
+                
+                <div> 
+                    CATENA ENGENHARIA 
+                </div>
+            </header> 
+            
+            <nav> 
+                
+                <a href="{{ url_for('dashboard.index') }}"> 
+                    🏠 Início 
+                </a> 
+                
+                <a href="{{ url_for('materiais.index') }}"> 
+                    📦 Materiais
+                </a> 
+                
+                <a href="{{ url_for('veiculos.index') }}"> 
+                    🚚 Veículos 
+                </a> 
+                
+                <a href="{{ url_for('colaboradores.index') }}"> 
+                    👷 Colaboradores 
+                </a> 
+                
+                <a href="{{ url_for('usuarios.index') }}"> 
+                    👤 Usuários 
+                </a> 
+                
+                <a href="{{ url_for('movimentacoes.index') }}"> 
+                    📋 Movimentação de material 
+                </a> 
+                
+                <a href="#"> 
+                    📋 Listas 
+                </a> 
+                
+                <a href="#"> 
+                    📄 Notas Fiscais 
+                </a> 
+
+                <a href="#"> 
+                    🚛 Manifestos 
+                </a> 
+                
+                <a href="{{ url_for('relatorios.index') }}">
+                    📊 Relatórios 
+                </a> 
+                
+                <a href="#"> 
+                    ⚙️ Configurações 
+                </a> 
+            </nav> 
+    </aside>
+
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="main-content">
+
+        <!-- TOPO -->
+        <header class="topbar">
+
+            <div>
+
+                <strong>
+                    Controle de Almoxarifado
+                </strong>
+
+            </div>
+
+            <div class="user-area">
+
+                <span>
+                    👤 {{ current_user.nome }}
+                </span>
+
+                <a
+                    href="{{ url_for('auth.logout') }}"
+                    class="logout-button"
+                >
+                    Sair
+                </a>
+
+            </div>
+
+        </header>
+
+
+        <!-- CONTEÚDO -->
+        <section class="dashboard">
+
+            <div class="page-header">
+
+                <div>
+
+                    <h1>
+                        Nova movimentação
+                    </h1>
+
+                    <p>
+                        Registre a entrada, saída ou retorno de materiais.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <form method="POST" id="form-movimentacao">
+
+                <!-- Identificador único para evitar cadastros duplicados -->
+                <input
+                    type="hidden"
+                    name="chave_idempotencia"
+                    id="chave_idempotencia"
+                    value="{{ chave_idempotencia }}"
+                >
+
+                <!-- DADOS DA MOVIMENTAÇÃO -->
+                <div class="form-card">
+
+                    <h3>
+                        Dados da movimentação
+                    </h3>
+
+
+                    <div class="form-grid">
+
+                        <!-- TIPO -->
+                        <div class="form-group">
+
+                            <label for="tipo">
+                                Tipo
+                            </label>
+
+                            <select
+                                name="tipo"
+                                id="tipo"
+                                required
+                            >
+
+                                <option value="">
+                                    Selecione
+                                </option>
+
+                                <option value="Entrada">
+                                    Entrada
+                                </option>
+
+                                <option value="SAIDA">
+                                    Saída
+                                </option>
+
+                                <option value="RETORNO">
+                                    Retorno
+                                </option>
+
+                                <option value="CONSUMO">
+                                    Consumo de material
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <!-- COLABORADOR -->
+                        <div class="form-group">
+
+                            <label for="colaborador_id">
+                                Colaborador
+                            </label>
+
+                            <select
+                                name="colaborador_id"
+                                id="colaborador_id"
+                                required
+                            >
+
+                                <option value="">
+                                    Selecione
+                                </option>
+
+                                {% for colaborador in colaboradores %}
+
+                                    <option
+                                        value="{{ colaborador.id }}"
+                                    >
+                                        {{ colaborador.nome }}
+                                    </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+
+                        <!-- VEÍCULO -->
+                        <div class="form-group">
+
+                            <label for="veiculo_id">
+                                Veículo
+                            </label>
+
+                            <select
+                                name="veiculo_id"
+                                id="veiculo_id"
+                            >
+
+                                <option value="">
+                                    Nenhum
+                                </option>
+
+                                {% for veiculo in veiculos %}
+
+                                    <option
+                                        value="{{ veiculo.id }}"
+                                    >
+                                        {{ veiculo.marca }}
+                                        {{ veiculo.modelo }}
+                                        -
+                                        {{ veiculo.placa }}
+                                    </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+
+                        <!-- DESTINO -->
+                        <div class="form-group">
+
+                            <label for="destino">
+                                Destino
+                            </label>
+
+                            <input
+                                type="text"
+                                name="destino"
+                                id="destino"
+                                maxlength="150"
+                                placeholder="Ex.: Obra Curitiba"
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- SAÍDA DE ORIGEM -->
+                    <div
+                        class="form-group"
+                        id="origem-container"
+                        style="display: none;"
+                    >
+
+                        <label for="movimentacao_origem_id">
+                            Movimentação de saída
+                        </label>
+
+                        <select
+                            name="movimentacao_origem_id"
+                            id="movimentacao_origem_id"
+                        >
+
+                            <option value="">
+                                Selecione a saída que será encerrada
+                            </option>
+
+                            {% for saida in saidas_json %}
+
+                                <option
+                                    value="{{ saida.id }}"
+                                >
+                                    {{ saida.numero_os }}
+                                    -
+                                    {{ saida.data }}
+                                    -
+                                    {{ saida.colaborador }}
+                                    -
+                                    {{ saida.destino }}
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                        <small>
+                            Selecione a saída que originou este retorno.
+                        </small>
+
+                    </div>
+
+
+                    <!-- OBSERVAÇÕES -->
+                    <div class="form-group">
+
+                        <label for="observacoes">
+                            Observações
+                        </label>
+
+                        <textarea
+                            name="observacoes"
+                            id="observacoes"
+                            rows="3"
+                            placeholder="Observações da movimentação"
+                        ></textarea>
+
+                    </div>
+
+                </div>
+
+
+                <!-- MATERIAIS -->
+                <div class="form-card">
+
+                    <!-- LEITURA DE CÓDIGO DO MATERIAL -->
+                    <div class="form-group" id="leitura-material-container">
+
+                        <label for="codigo-material">
+                            Código do material / QR Code
+                        </label>
+
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+
+                            <input
+                                type="text"
+                                id="codigo-material"
+                                placeholder="Digite o código do material"
+                                autocomplete="off"
+                                style="flex:1; min-width:200px;"
+                            >
+
+                            <button
+                                type="button"
+                                class="button-secondary"
+                                onclick="adicionarMaterialPorCodigo()"
+                            >
+                                + Adicionar pelo código
+                            </button>
+
+                            <button
+                                type="button"
+                                class="button-secondary"
+                                id="btn-escanear-qrcode"
+                                onclick="abrirLeitorQRCode()"
+                            >
+                                📷 Escanear QR Code
+                            </button>
+
+                        </div>
+
+                        <small>
+                            Informe o código cadastrado do material.
+                        </small>
+
+                        <!-- ÁREA DO LEITOR DE QR CODE -->
+                        <div
+                            id="camera-container"
+                            style="display:none; margin-top:15px;"
+                        >
+                            <div
+                                id="leitor-qrcode"
+                                style="width:100%; max-width:400px;"
+                            ></div>
+
+                            <button
+                                type="button"
+                                class="button-danger"
+                                onclick="fecharLeitorQRCode()"
+                                style="margin-top:10px;"
+                            >
+                                Fechar câmera
+                            </button>
+                        </div>
+
+                    </div>
+
+                    <div class="page-header">
+
+                        <div>
+
+                            <h3>
+                                Materiais
+                            </h3>
+
+                            <p id="materiais-descricao">
+                                Adicione os materiais desta movimentação.
+                            </p>
+
+                        </div>
+
+                        <button
+                            type="button"
+                            class="button-secondary"
+                            id="btn-adicionar-material"
+                            onclick="adicionarMaterial()"
+                        >
+                            + Adicionar material
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        id="materiais-container"
+                        class="table-container"
+                    >
+
+                        <table>
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        Material
+                                    </th>
+
+                                    <th>
+                                        Quantidade
+                                    </th>
+
+                                    <th>
+                                        Observação
+                                    </th>
+
+                                    <th>
+                                        Ação
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody id="materiais-body">
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+
+                <!-- AÇÕES -->
+                <div class="form-actions">
+
+                    <a
+                        href="{{ url_for('movimentacoes.index') }}"
+                        class="button-secondary"
+                    >
+                        Cancelar
+                    </a>
+
+                    <button
+                        type="submit"
+                        class="button-primary"
+                    >
+                        Criar movimentação
+                    </button>
+
+                </div>
+
+            </form>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- DADOS DOS MATERIAIS -->
+<script
+    id="materiais-data"
+    type="application/json"
+>
+    {{ materiais_json | tojson }}
+</script>
+
+
+<!-- DADOS DAS SAÍDAS -->
+<script
+    id="saidas-data"
+    type="application/json"
+>
+    {{ saidas_json | tojson }}
+</script>
+
+<!-- DADOS DO FORMULÁRIO ANTERIOR -->
+<script id="dados-anteriores" type="application/json">
+    {{ dados_formulario | default({}) | tojson }}
+</script>
+
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js">    
+</script>
+
+<script>
+
+const dadosAnteriores = JSON.parse(
+    document.getElementById(
+        "dados-anteriores"
+    ).textContent
+);
+
+const materiais = JSON.parse(
+    document.getElementById(
+        "materiais-data"
+    ).textContent
+);
+
+
+const saidas = JSON.parse(
+    document.getElementById(
+        "saidas-data"
+    ).textContent
+);
+
+
+const tipoSelect = document.getElementById(
+    "tipo"
+);
+
+
+const origemContainer = document.getElementById(
+    "origem-container"
+);
+
+
+const origemSelect = document.getElementById(
+    "movimentacao_origem_id"
+);
+
+
+const materiaisBody = document.getElementById(
+    "materiais-body"
+);
+
+
+const botaoAdicionar = document.getElementById(
+    "btn-adicionar-material"
+);
+
+
+const materiaisDescricao = document.getElementById(
+    "materiais-descricao"
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| ALTERAÇÃO DO TIPO
+|--------------------------------------------------------------------------
+*/
+
+tipoSelect.addEventListener(
+    "change",
+    function() {
+
+        if (
+            tipoSelect.value === "RETORNO" ||
+            tipoSelect.value === "CONSUMO"
+        ) {
+            ativarModoRetorno();
+        } else {
+            ativarModoNormal();
+        }
+
+    }
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| MODO NORMAL
+|--------------------------------------------------------------------------
+*/
+
+function ativarModoNormal() {
+
+    origemContainer.style.display = "none";
+
+    origemSelect.required = false;
+
+    origemSelect.value = "";
+
+    botaoAdicionar.style.display = "inline-block";
+
+    document.getElementById(
+        "leitura-material-container"
+    ).style.display = "block";
+
+    materiaisDescricao.textContent =
+        "Adicione os materiais desta movimentação.";
+
+    materiaisBody.innerHTML = "";
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| MODO RETORNO
+|--------------------------------------------------------------------------
+*/
+
+function ativarModoRetorno() {
+
+    const consumo = tipoSelect.value === "CONSUMO";
+
+    origemContainer.style.display = "block";
+
+    origemSelect.required = true;
+
+    botaoAdicionar.style.display = "none";
+
+    document.getElementById(
+        "leitura-material-container"
+    ).style.display = "block";
+
+    materiaisDescricao.textContent = consumo
+        ? "Selecione uma saída para registrar os materiais efetivamente consumidos."
+        : "Selecione uma saída para registrar os materiais devolvidos.";
+
+    materiaisBody.innerHTML = "";
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| SELEÇÃO DA SAÍDA
+|--------------------------------------------------------------------------
+*/
+
+origemSelect.addEventListener(
+    "change",
+    function() {
+
+        const saidaId = parseInt(
+            origemSelect.value
+        );
+
+        materiaisBody.innerHTML = "";
+
+        if (!saidaId) {
+
+            return;
+
+        }
+
+
+        const saida = saidas.find(
+            function(item) {
+
+                return item.id === saidaId;
+
+            }
+        );
+
+
+        if (!saida) {
+
+            return;
+
+        }
+
+
+        saida.itens.forEach(function(item) {
+
+            adicionarMaterialRetorno(item);
+
+        });
+
+    }
+);
+
+function adicionarMaterialPorCodigo() {
+
+    if (tipoSelect.value === "RETORNO") {
+
+        if (!origemSelect.value) {
+            alert("Selecione primeiro a OS de origem.");
+            return;
+        }
+
+        const campoCodigo = document.getElementById("codigo-material");
+
+        let codigo = campoCodigo.value.trim();
+
+        try {
+            const url = new URL(codigo);
+            const partes = url.pathname.split("/").filter(Boolean);
+
+            if (
+                partes.length === 3 &&
+                partes[0] === "materiais" &&
+                partes[1] === "visualizar"
+            ) {
+                codigo = decodeURIComponent(partes[2]);
+            }
+        } catch (erro) {
+            // O valor informado já é um código simples.
+        }
+
+        const material = materiais.find(
+            item => String(item.codigo).toLowerCase() === codigo.toLowerCase()
+        );
+
+        if (!material) {
+            alert("Material não encontrado no cadastro.");
+            return;
+        }
+
+        const linhas = materiaisBody.querySelectorAll("tr");
+
+        for (const linha of linhas) {
+
+            const campoMaterial = linha.querySelector(
+                'input[name="material_id[]"]'
+            );
+
+            if (
+                campoMaterial &&
+                Number(campoMaterial.value) === Number(material.id)
+            ) {
+
+                const campoQuantidade = linha.querySelector(
+                    'input[name="quantidade[]"]'
+                );
+
+                const quantidadeAtual = Number(campoQuantidade.value || 0);
+                const quantidadeMaxima = Number(campoQuantidade.max);
+
+                if (quantidadeAtual + 1 > quantidadeMaxima) {
+                    alert("Quantidade máxima disponível para retorno atingida.");
+                    return;
+                }
+
+                campoQuantidade.value = String(quantidadeAtual + 1);
+
+                campoCodigo.value = "";
+                campoCodigo.focus();
+
+                return;
+            }
+        }
+
+        alert("Este material não pertence à OS selecionada.");
+        return;
+    }
+
+    if (tipoSelect.value === "CONSUMO") {
+        alert("A leitura por QR Code para consumo será configurada depois.");
+        return;
+    }
+
+    const campoCodigo = document.getElementById("codigo-material");
+
+    let codigo = campoCodigo.value.trim();
+
+try {
+
+    const url = new URL(codigo);
+
+    const partes = url.pathname.split("/").filter(Boolean);
+
+    if (
+        partes.length === 3 &&
+        partes[0] === "materiais" &&
+        partes[1] === "visualizar"
+    ) {
+        codigo = decodeURIComponent(partes[2]);
+    }
+
+} catch (erro) {
+    // Se não for uma URL, mantém o código digitado.
+}
+
+codigo = codigo.toLowerCase();
+
+    if (!codigo) {
+        alert("Informe o código do material.");
+        return;
+    }
+
+    const material = materiais.find(
+        item => item.codigo.toLowerCase() === codigo
+    );
+
+    if (!material) {
+        alert("Material não encontrado.");
+        return;
+    }
+
+    const linhas = materiaisBody.querySelectorAll("tr");
+
+    for (const linha of linhas) {
+
+        const select = linha.querySelector(
+            'select[name="material_id[]"]'
+        );
+
+        if (select && Number(select.value) === material.id) {
+
+            const quantidade = linha.querySelector(
+                'input[name="quantidade[]"]'
+            );
+
+            quantidade.value = (
+                Number(quantidade.value || 0) + 1
+            ).toString();
+
+            campoCodigo.value = "";
+            campoCodigo.focus();
+
+            return;
+        }
+    }
+
+    adicionarMaterial();
+
+    const novaLinha = materiaisBody.lastElementChild;
+
+    novaLinha.querySelector(
+        'select[name="material_id[]"]'
+    ).value = material.id;
+
+    novaLinha.querySelector(
+        'input[name="quantidade[]"]'
+    ).value = "1";
+
+    campoCodigo.value = "";
+    campoCodigo.focus();
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| ADICIONAR MATERIAL NORMAL
+|--------------------------------------------------------------------------
+*/
+
+function adicionarMaterial() {
+
+    if (
+        tipoSelect.value === "RETORNO" ||
+        tipoSelect.value === "CONSUMO"
+    ) {
+        return;
+    }
+
+
+    const linha = document.createElement(
+        "tr"
+    );
+
+
+    let opcoes = `
+        <option value="">
+            Selecione
+        </option>
+    `;
+
+
+    materiais.forEach(
+        function(material) {
+
+            opcoes += `
+                <option
+                    value="${material.id}"
+                >
+                    ${material.codigo}
+                    -
+                    ${material.nome}
+                    (${material.quantidade}
+                    ${material.unidade})
+                </option>
+            `;
+
+        }
+    );
+
+
+    linha.innerHTML = `
+
+        <td>
+
+            <select
+                name="material_id[]"
+                required
+            >
+
+                ${opcoes}
+
+            </select>
+
+        </td>
+
+
+        <td>
+
+            <input
+                type="number"
+                name="quantidade[]"
+                min="0.001"
+                step="0.001"
+                required
+            >
+
+        </td>
+
+
+        <td>
+
+            <input
+                type="text"
+                name="item_observacao[]"
+                maxlength="255"
+                placeholder="Opcional"
+            >
+
+        </td>
+
+
+        <td>
+
+            <button
+                type="button"
+                class="button-danger"
+                onclick="removerMaterial(this)"
+            >
+                Remover
+            </button>
+
+        </td>
+
+    `;
+
+
+    materiaisBody.appendChild(
+        linha
+    );
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| ADICIONAR MATERIAL DO RETORNO
+|--------------------------------------------------------------------------
+*/
+
+function adicionarMaterialRetorno(
+    item
+) {
+
+    const linha = document.createElement(
+        "tr"
+    );
+
+
+    const quantidadeDisponivel =
+        Number(
+            item.quantidade_disponivel_retorno
+        );
+
+    const consumo = tipoSelect.value === "CONSUMO";
+
+    const nomeOperacao = consumo
+        ? "consumo"
+        : "retorno";
+
+    const quantidadeConsumida = Number(
+        item.quantidade_consumida || 0
+    );    
+
+    linha.innerHTML = `
+
+        <td>
+
+            <input
+                type="hidden"
+                name="material_id[]"
+                value="${item.material_id}"
+            >
+
+            <input
+                type="hidden"
+                name="movimentacao_item_origem_id[]"
+                value="${item.id}"
+            >
+
+            <strong>
+                ${item.codigo}
+                -
+                ${item.nome}
+            </strong>
+
+        </td>
+
+
+        <td>
+
+            <span>
+                Levado:
+                <strong>
+                    ${item.quantidade}
+                    ${item.unidade}
+                </strong>
+            </span>
+
+            <br>
+
+            <span>
+                Já retornado:
+                <strong>
+                    ${item.quantidade_retorno}
+                    ${item.unidade}
+                </strong>
+            </span>
+
+            <br>
+
+            <span>
+                Já consumido:
+                <strong>
+                    ${quantidadeConsumida}
+                    ${item.unidade}
+                </strong>
+            </span>
+            
+            <br>
+            
+            <span>
+                Disponível para ${nomeOperacao}:
+                <strong>
+                    ${quantidadeDisponivel}
+                    ${item.unidade}
+                </strong>
+            </span>
+
+            <br>
+
+            <input
+                type="number"
+                name="quantidade[]"
+                min="0"
+                max="${quantidadeDisponivel}"
+                step="0.001"
+                value="0"
+                required
+                style="margin-top: 6px;"
+            >
+
+            <small>
+                Nova quantidade de ${nomeOperacao}
+            </small>
+
+        </td>
+
+
+        <td>
+
+            <input
+                type="text"
+                name="item_observacao[]"
+                maxlength="255"
+                placeholder="Opcional"
+            >
+
+        </td>
+
+
+        <td>
+
+            <span>
+                ${consumo ? "Consumo vinculado" : "Retorno vinculado"}
+            </span>
+
+        </td>
+
+    `;
+
+
+    materiaisBody.appendChild(
+        linha
+    );
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| REMOVER MATERIAL
+|--------------------------------------------------------------------------
+*/
+
+function removerMaterial(
+    botao
+) {
+
+    const linha = botao.closest(
+        "tr"
+    );
+
+
+    if (linha) {
+
+        linha.remove();
+
+    }
+
+}
+
+const formularioMovimentacao = document.getElementById(
+    "form-movimentacao"
+);
+
+let envioEmAndamento = false;
+
+formularioMovimentacao.addEventListener(
+    "submit",
+    function(event) {
+
+        if (envioEmAndamento) {
+            event.preventDefault();
+            return;
+        }
+
+        const quantidades = Array.from(
+            formularioMovimentacao.querySelectorAll(
+                'input[name="quantidade[]"]'
+            )
+        );
+
+        const existeQuantidade = quantidades.some(
+            function(campo) {
+                return Number(campo.value) > 0;
+            }
+        );
+
+        if (!existeQuantidade) {
+            event.preventDefault();
+
+            alert(
+                "Informe uma quantidade maior que zero para pelo menos um material."
+            );
+
+            return;
+        }
+
+        envioEmAndamento = true;
+
+        const botaoEnviar = formularioMovimentacao.querySelector(
+            'button[type="submit"]'
+        );
+
+        if (botaoEnviar) {
+            botaoEnviar.disabled = true;
+            botaoEnviar.textContent = "Salvando movimentação...";
+        }
+    }
+);
+
+function restaurarFormulario() {
+
+    if (!dadosAnteriores || !dadosAnteriores.tipo) {
+        return;
+    }
+
+    function valor(campo) {
+        return dadosAnteriores[campo]?.[0] || "";
+    }
+
+    document.getElementById("tipo").value = valor("tipo");
+    document.getElementById("colaborador_id").value = valor("colaborador_id");
+    document.getElementById("veiculo_id").value = valor("veiculo_id");
+    document.getElementById("destino").value = valor("destino");
+    document.getElementById("observacoes").value = valor("observacoes");
+
+    const tipo = valor("tipo");
+
+    if (tipo === "RETORNO" || tipo === "CONSUMO") {
+
+        ativarModoRetorno();
+
+        origemSelect.value = valor("movimentacao_origem_id");
+
+        origemSelect.dispatchEvent(
+            new Event("change")
+        );
+
+    } else {
+
+        ativarModoNormal();
+
+        const ids = dadosAnteriores["material_id[]"] || [];
+        const quantidades = dadosAnteriores["quantidade[]"] || [];
+        const observacoes = dadosAnteriores["item_observacao[]"] || [];
+
+        ids.forEach(function(id, indice) {
+
+            adicionarMaterial();
+
+            const linha = materiaisBody.lastElementChild;
+
+            linha.querySelector(
+                'select[name="material_id[]"]'
+            ).value = id;
+
+            linha.querySelector(
+                'input[name="quantidade[]"]'
+            ).value = quantidades[indice] || "";
+
+            linha.querySelector(
+                'input[name="item_observacao[]"]'
+            ).value = observacoes[indice] || "";
+
+        });
+    }
+
+    if (tipo === "RETORNO" || tipo === "CONSUMO") {
+
+        const quantidades = dadosAnteriores["quantidade[]"] || [];
+        const observacoes = dadosAnteriores["item_observacao[]"] || [];
+
+        const linhas = materiaisBody.querySelectorAll("tr");
+
+        linhas.forEach(function(linha, indice) {
+
+            const campoQuantidade = linha.querySelector(
+                'input[name="quantidade[]"]'
+            );
+
+            const campoObservacao = linha.querySelector(
+                'input[name="item_observacao[]"]'
+            );
+
+            if (campoQuantidade) {
+                campoQuantidade.value = quantidades[indice] ?? "0";
+            }
+
+            if (campoObservacao) {
+                campoObservacao.value = observacoes[indice] || "";
+            }
+
+        });
+    }
+}
+
+// Permite adicionar material pressionando Enter
+document.getElementById("codigo-material")
+    .addEventListener("keydown", function(event) {
+
+        if (event.key === "Enter") {
+
+            event.preventDefault();
+
+            adicionarMaterialPorCodigo();
+        }
+
+    });
+
+let leitorQRCode = null;
+let cameraIniciando = false;
+let ultimoCodigoLido = "";
+let horarioUltimaDeteccao = 0;
+
+async function abrirLeitorQRCode() {
+
+    if (leitorQRCode || cameraIniciando) {
+        return;
+    }
+
+    if (!window.isSecureContext) {
+        alert(
+            "A câmera exige HTTPS ou acesso local por localhost."
+        );
+        return;
+    }
+
+    if (typeof Html5Qrcode === "undefined") {
+        alert("Não foi possível carregar a biblioteca de QR Code.");
+        return;
+    }
+
+    cameraIniciando = true;
+    ultimoCodigoLido = "";
+    horarioUltimaDeteccao = 0;
+
+    setInterval(function() {
+
+        if (
+            leitorQRCode &&
+            ultimoCodigoLido &&
+            Date.now() - horarioUltimaDeteccao > 1500
+        ) {
+            ultimoCodigoLido = "";
+        }
+
+    }, 500);
+
+    const container = document.getElementById("camera-container");
+
+    container.style.display = "block";
+
+    try {
+
+        leitorQRCode = new Html5Qrcode("leitor-qrcode");
+
+        await leitorQRCode.start(
+            { facingMode: "environment" },
+            {
+                fps: 10,
+                qrbox: {
+                    width: 220,
+                    height: 220
+                }
+            },
+            function(codigoLido) {
+
+                const agora = Date.now();
+
+                // Atualiza o instante em que o QR Code foi detectado.
+                horarioUltimaDeteccao = agora;
+
+                // Impede adicionar novamente o mesmo código
+                // enquanto ele continuar sendo detectado.
+                if (codigoLido === ultimoCodigoLido) {
+                    return;
+                }
+
+                ultimoCodigoLido = codigoLido;
+
+                const campo = document.getElementById("codigo-material");
+
+                campo.value = codigoLido;
+
+                adicionarMaterialPorCodigo();
+
+            },
+            function() {
+                // Ignora quadros sem QR Code.
+            }
+        );
+
+    } catch (erro) {
+
+        console.error("Erro ao iniciar câmera:", erro);
+
+        alert(
+            "Não foi possível abrir a câmera. Verifique as permissões."
+        );
+
+        if (leitorQRCode) {
+            try {
+                await leitorQRCode.clear();
+            } catch (_) {}
+        }
+
+        leitorQRCode = null;
+        container.style.display = "none";
+
+    } finally {
+        cameraIniciando = false;
+    }
+}
+
+async function fecharLeitorQRCode() {
+
+    if (cameraIniciando) {
+        return;
+    }
+
+    if (leitorQRCode) {
+
+        try {
+            if (leitorQRCode.isScanning) {
+                await leitorQRCode.stop();
+            }
+
+            await leitorQRCode.clear();
+
+        } catch (erro) {
+            console.error("Erro ao fechar câmera:", erro);
+        }
+
+        leitorQRCode = null;
+    }
+
+    document.getElementById("camera-container").style.display = "none";
+}
+
+restaurarFormulario();
+
+</script>
+
+{% endblock %}

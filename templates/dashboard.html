@@ -1,0 +1,141 @@
+{% extends "base.html" %} 
+
+{% block content %} 
+
+<div class="layout"> 
+
+    <aside class="sidebar"> 
+        
+        <!-- LOGO CATENA --> 
+
+         <div class="sidebar-logo"> 
+            <img 
+                src="{{ url_for('static', filename='img/Catena logo.jpg') }}"
+                alt="Catena Engenharia" 
+                > 
+            </div> 
+            
+            <!-- NOME DO EMPRESA --> 
+             
+            <header class="sidebar-logo"> 
+                
+                <div> 
+                    CATENA ENGENHARIA 
+                </div>
+            </header> 
+            
+            <nav> 
+                
+                <a href="{{ url_for('dashboard.index') }}"> 
+                    🏠 Início 
+                </a> 
+                
+                <a href="{{ url_for('materiais.index') }}"> 
+                    📦 Materiais
+                </a> 
+                
+                <a href="{{ url_for('veiculos.index') }}"> 
+                    🚚 Veículos 
+                </a> 
+                
+                <a href="{{ url_for('colaboradores.index') }}"> 
+                    👷 Colaboradores 
+                </a> 
+                
+                <a href="{{ url_for('usuarios.index') }}"> 
+                    👤 Usuários 
+                </a> 
+                
+                <a href="{{ url_for('movimentacoes.index') }}"> 
+                    📋 Movimentação de material 
+                </a> 
+                
+                <a href="#"> 
+                    📋 Listas 
+                </a> 
+                
+                <a href="#"> 
+                    📄 Notas Fiscais 
+                </a> 
+
+                <a href="#"> 
+                    🚛 Manifestos 
+                </a> 
+                
+                <a href="{{ url_for('relatorios.index') }}">
+                    📊 Relatórios 
+                </a> 
+                
+                <a href="#"> 
+                    ⚙️ Configurações 
+                </a> 
+            </nav> 
+    </aside>
+        
+        <main class="main-content"> 
+            
+            <header class="topbar"> 
+                
+                <div> 
+                    <strong>
+                    Controle de Almoxarifado
+                    </strong>
+                </div> 
+                
+                <div class="user-area"> 
+                    
+                    <span> 
+                        👤 {{ current_user.nome }} 
+                    </span> 
+                    
+                    <a 
+                        href="{{ url_for('auth.logout') }}" 
+                        class="logout-button"   
+                    > 
+                        Sair 
+                    </a>
+
+                </div> 
+            
+            </header> 
+
+            
+            <section class="dashboard"> 
+ 
+                <div class="cards"> 
+                    
+                    <div class="card"> 
+                        <span>📦</span> 
+                        <h3>Materiais catalogados no almoxarifados</h3> 
+                        <strong>{{ total_materiais }}</strong> 
+                    </div> 
+                    
+                    <div class="card"> 
+                        <span>📥</span> 
+                        <h3>Retornos de materiais para o almoxarifado</h3> 
+                        <strong>{{ total_retornos }}</strong> 
+                    </div> 
+                    
+                    <div class="card"> 
+                        <span>📤</span> 
+                        <h3>Saídas para campo</h3> 
+                        <strong>{{ total_saidas }}</strong> 
+                    </div> 
+                    
+                    <div class="card"> 
+                        <span>🚚</span> 
+                        <h3>Em movimentação</h3> 
+                        <strong>{{ em_movimentacao }}</strong> 
+                    </div> 
+                
+                </div>
+            
+            </section> 
+        
+        
+        </main> 
+    
+    </div>
+
+</div>    
+{% endblock %}

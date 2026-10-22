@@ -1,0 +1,364 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="layout">
+
+    <aside class="sidebar"> 
+        
+        <!-- LOGO CATENA --> 
+
+         <div class="sidebar-logo"> 
+            <img 
+                src="{{ url_for('static', filename='img/Catena logo.jpg') }}"
+                alt="Catena Engenharia" 
+                > 
+            </div> 
+            
+            <!-- NOME DO EMPRESA --> 
+             
+            <header class="sidebar-logo"> 
+                
+                <div> 
+                    CATENA ENGENHARIA 
+                </div>
+            </header> 
+            
+            <nav> 
+                
+                <a href="{{ url_for('dashboard.index') }}"> 
+                    🏠 Início 
+                </a> 
+                
+                <a href="{{ url_for('materiais.index') }}"> 
+                    📦 Materiais
+                </a> 
+                
+                <a href="{{ url_for('veiculos.index') }}"> 
+                    🚚 Veículos 
+                </a> 
+                
+                <a href="{{ url_for('colaboradores.index') }}"> 
+                    👷 Colaboradores 
+                </a> 
+                
+                <a href="{{ url_for('usuarios.index') }}"> 
+                    👤 Usuários 
+                </a> 
+                
+                <a href="{{ url_for('movimentacoes.index') }}"> 
+                    📋 Movimentação de material 
+                </a> 
+                
+                <a href="#"> 
+                    📋 Listas 
+                </a> 
+                
+                <a href="#"> 
+                    📄 Notas Fiscais 
+                </a> 
+
+                <a href="#"> 
+                    🚛 Manifestos 
+                </a> 
+                
+                <a href="{{ url_for('relatorios.index') }}">
+                    📊 Relatórios 
+                </a> 
+                
+                <a href="#"> 
+                    ⚙️ Configurações 
+                </a> 
+            </nav> 
+    </aside>
+
+
+    <main class="main-content">
+
+        <header class="topbar">
+
+            <div>
+                <strong>
+                    Controle de Almoxarifado
+                </strong>
+            </div>
+
+            <div class="user-area">
+
+                <span>
+                    👤 {{ current_user.nome }}
+                </span>
+
+                <a
+                    href="{{ url_for('auth.logout') }}"
+                    class="logout-button"
+                >
+                    Sair
+                </a>
+
+            </div>
+
+        </header>
+
+
+        <section class="dashboard">
+
+            <div class="page-header">
+
+                <div>
+
+                    <h1>
+                        Materiais
+                    </h1>
+
+                    <p>
+                        Cadastro e controle de materiais
+                    </p>
+
+                </div>
+
+                <a
+                    href="{{ url_for('materiais.novo') }}"
+                    class="button-primary"
+                >
+                    Novo material
+                </a>
+
+            </div>
+
+            <div class="search-card">
+
+                <form
+                    method="GET"
+                    action="{{ url_for('materiais.index') }}"
+                    class="search-form"
+                >
+
+                    <input
+                        type="text"
+                        name="pesquisa"
+                        placeholder="Pesquisar por código, nome ou localização..."
+                        value="{{ pesquisa }}"
+                    >
+
+                    <button
+                        type="submit"
+                        class="button-primary"
+                    >
+                        🔎 Pesquisar
+                    </button>
+
+                    {% if pesquisa %}
+
+                        <a
+                            href="{{ url_for('materiais.index') }}"
+                            class="button-secondary"
+                        >
+                            Limpar
+                        </a>
+
+                    {% endif %}
+
+                </form>
+
+            </div>
+
+
+            {% with messages = get_flashed_messages(
+                with_categories=true
+            ) %}
+
+                {% for category, message in messages %}
+
+                    <div class="message {{ category }}">
+                        {{ message }}
+                    </div>
+
+                {% endfor %}
+
+            {% endwith %}
+
+
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Código</th>
+                            <th>Material</th>
+                            <th>Unidade</th>
+                            <th>Quantidade</th>
+                            <th>Estoque mínimo</th>
+                            <th>Estoque</th>
+                            <th>Localização</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for material in materiais %}
+
+                        <tr>
+
+                            <td>
+                                {{ material.codigo }}
+                            </td>
+
+                            <td>
+                                <strong>
+                                    {{ material.nome }}
+                                </strong>
+                            </td>
+
+                            <td>
+                                {{ material.unidade }}
+                            </td>
+
+                            <td>
+
+                                {% if material.quantidade <= material.estoque_minimo %}
+
+                                    <strong class="stock-low">
+                                        ⚠️ {{ material.quantidade }}
+                                    </strong>
+
+                                {% else %}
+
+                                    {{ material.quantidade }}
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+                                {{ material.estoque_minimo }}
+                            </td>
+
+                            <td>
+
+                                {% if material.quantidade <= material.estoque_minimo %}
+
+                                    <span class="status-inactive">
+                                        Estoque baixo
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="status-active">
+                                        Normal
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+                                {{ material.localizacao or "-" }}
+                            </td>
+
+                            <td>
+
+                                {% if material.ativo %}
+
+                                    <span class="status-active">
+                                        Ativo
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="status-inactive">
+                                        Inativo
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+
+                                <a
+                                    href="{{ url_for(
+                                        'materiais.qr_code',
+                                        id=material.id
+                                    ) }}"
+                                    class="button-small"
+                                    target="_blank"
+                                >
+                                    📱 QR Code
+                                </a>
+
+                                <a
+                                    href="{{ url_for(
+                                        'materiais.etiqueta',
+                                        id=material.id
+                                    ) }}"
+                                    class="button-small"
+                                    target="_blank"
+                                >
+                                    🖨️ Etiqueta
+                                </a>
+
+                                {% if material.ativo %}
+
+                                    <form
+                                        method="POST"
+                                        action="{{ url_for(
+                                            'materiais.desativar',
+                                            id=material.id
+                                        ) }}"
+                                        style="display:inline;"
+                                    >
+
+                                        <button
+                                            type="submit"
+                                            class="button-danger-small"
+                                            onclick="return confirm(
+                                                'Deseja desativar este material?'
+                                            );"
+                                        >
+                                            Desativar
+                                        </button>
+
+                                    </form>
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+                        {% else %}
+
+                        <tr>
+
+                            <td
+                                colspan="9"
+                                style="text-align:center;"
+                            >
+                                Nenhum material cadastrado.
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+{% endblock %}

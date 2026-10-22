@@ -1,0 +1,325 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="layout">
+
+    <!-- MENU LATERAL -->
+    <aside class="sidebar"> 
+        
+        <!-- LOGO CATENA --> 
+
+         <div class="sidebar-logo"> 
+            <img 
+                src="{{ url_for('static', filename='img/Catena logo.jpg') }}"
+                alt="Catena Engenharia" 
+                > 
+            </div> 
+            
+            <!-- NOME DO EMPRESA --> 
+             
+            <header class="sidebar-logo"> 
+                
+                <div> 
+                    CATENA ENGENHARIA 
+                </div>
+            </header> 
+            
+            <nav> 
+                
+                <a href="{{ url_for('dashboard.index') }}"> 
+                    🏠 Início 
+                </a> 
+                
+                <a href="{{ url_for('materiais.index') }}"> 
+                    📦 Materiais
+                </a> 
+                
+                <a href="{{ url_for('veiculos.index') }}"> 
+                    🚚 Veículos 
+                </a> 
+                
+                <a href="{{ url_for('colaboradores.index') }}"> 
+                    👷 Colaboradores 
+                </a> 
+                
+                <a href="{{ url_for('usuarios.index') }}"> 
+                    👤 Usuários 
+                </a> 
+                
+                <a href="{{ url_for('movimentacoes.index') }}"> 
+                    📋 Movimentação de material 
+                </a> 
+                
+                <a href="#"> 
+                    📋 Listas 
+                </a> 
+                
+                <a href="#"> 
+                    📄 Notas Fiscais 
+                </a> 
+
+                <a href="#"> 
+                    🚛 Manifestos 
+                </a> 
+                
+                <a href="{{ url_for('relatorios.index') }}">
+                    📊 Relatórios 
+                </a> 
+                
+                <a href="#"> 
+                    ⚙️ Configurações 
+                </a> 
+            </nav> 
+    </aside>
+
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="main-content">
+
+        <!-- TOPO -->
+        <header class="topbar">
+
+            <div>
+                <strong>
+                    Controle de Almoxarifado
+                </strong>
+            </div>
+
+            <div class="user-area">
+
+                <span>
+                    👤 {{ current_user.nome }}
+                </span>
+
+                <a
+                    href="{{ url_for('auth.logout') }}"
+                    class="logout-button"
+                >
+                    Sair
+                </a>
+
+            </div>
+
+        </header>
+
+
+        <!-- CONTEÚDO -->
+        <section class="dashboard">
+
+            <div class="page-header">
+
+                <div>
+
+                    <h1>
+                        Entradas e Saídas
+                    </h1>
+
+                    <p>
+                        Controle das movimentações de materiais do almoxarifado.
+                    </p>
+
+                </div>
+
+                <a
+                    href="{{ url_for('movimentacoes.nova') }}"
+                    class="button-primary"
+                >
+                    Nova movimentação
+                </a>
+
+            </div>
+
+
+            <!-- PESQUISA E FILTRO POR PERÍODO -->
+            <div class="search-card">
+
+                <form
+                    method="GET"
+                    class="search-form"
+                >
+
+                    <input
+                        type="text"
+                        name="pesquisa"
+                        value="{{ pesquisa }}"
+                        placeholder="Pesquisar por tipo, status, destino, colaborador ou material..."
+                    >
+
+                    <label>
+                        Data inicial
+                        <input
+                            type="date"
+                            name="data_inicial"
+                            value="{{ data_inicial }}"
+                        >
+                    </label>
+
+                    <label>
+                        Data final
+                        <input
+                            type="date"
+                            name="data_final"
+                            value="{{ data_final }}"
+                        >
+                    </label>
+
+                    <button
+                        type="submit"
+                        class="button-primary"
+                    >
+                        🔎 Filtrar
+                    </button>
+
+                    {% if pesquisa or data_inicial or data_final %}
+
+                        <a
+                            href="{{ url_for('movimentacoes.index') }}"
+                            class="button-secondary"
+                        >
+                            Limpar
+                        </a>
+
+                    {% endif %}
+
+                </form>
+
+            </div>
+
+
+            <!-- TABELA -->
+<div class="table-container">
+
+    <table>
+
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Ordem de Serviço</th>
+                <th>Colaborador</th>
+                <th>Veículo</th>
+                <th>Destino</th>
+                <th>Status</th>
+                <th>Ação</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for movimentacao in movimentacoes %}
+
+            <tr>
+
+                <!-- DATA -->
+                <td>
+                    {{ movimentacao.data_movimentacao.strftime("%d/%m/%Y %H:%M") }}
+                </td>
+
+                <!-- ORDEM DE SERVIÇO -->
+                <td>
+                    <a
+                        href="{{ url_for('movimentacoes.visualizar', id=movimentacao.id) }}"
+                        class="button-secondary"
+                    >
+                        {{ movimentacao.numero_os or ("#" ~ movimentacao.id) }}
+                    </a>
+                </td>
+
+                <!-- COLABORADOR -->
+                <td>
+                    {% if movimentacao.colaborador %}
+                        {{ movimentacao.colaborador.nome }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+
+                <!-- VEÍCULO -->
+                <td>
+                    {% if movimentacao.veiculo %}
+                        {{ movimentacao.veiculo.placa }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+
+                <!-- DESTINO -->
+                <td>
+                    {{ movimentacao.destino or "-" }}
+                </td>
+
+                <!-- STATUS -->
+                <td>
+
+                    {% if movimentacao.status == "ENCERRADA" %}
+
+                        <span class="status-inactive">
+                            ✅ Encerrada
+                        </span>
+
+                    {% elif movimentacao.tipo == "SAIDA" %}
+
+                        <span class="status-active">
+                            🚚 Em movimentação
+                        </span>
+
+                    {% elif movimentacao.tipo == "RETORNO" %}
+
+                        <span class="status-active">
+                            📥 Retorno registrado
+                        </span>
+
+                    {% elif movimentacao.tipo == "CONSUMO" %}
+
+                        <span class="status-active">
+                            🔧 Consumo registrado
+                        </span>
+
+                    {% elif movimentacao.tipo == "ENTRADA" %}
+
+                        <span class="status-active">
+                            📦 Entrada registrada
+                        </span>
+
+                    {% else %}
+
+                        <span class="status-inactive">
+                            {{ movimentacao.status }}
+                        </span>
+
+                    {% endif %}
+
+                </td>
+
+                <!-- AÇÃO -->
+                <td>
+                    <a
+                        href="{{ url_for('movimentacoes.visualizar', id=movimentacao.id) }}"
+                        class="button-secondary"
+                    >
+                        Visualizar
+                    </a>
+                </td>
+
+            </tr>
+
+            {% else %}
+
+            <tr>
+                <td
+                    colspan="7"
+                    style="text-align:center; padding:30px;"
+                >
+                    Nenhuma movimentação cadastrada.
+                </td>
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+{% endblock %}

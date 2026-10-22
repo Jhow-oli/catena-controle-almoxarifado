@@ -1,0 +1,610 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="layout">
+
+    <!-- MENU LATERAL -->
+    <aside class="sidebar"> 
+        
+        <!-- LOGO CATENA --> 
+
+         <div class="sidebar-logo"> 
+            <img 
+                src="{{ url_for('static', filename='img/Catena logo.jpg') }}"
+                alt="Catena Engenharia" 
+                > 
+            </div> 
+            
+            <!-- NOME DO EMPRESA --> 
+             
+            <header class="sidebar-logo"> 
+                
+                <div> 
+                    CATENA ENGENHARIA 
+                </div>
+            </header> 
+            
+            <nav> 
+                
+                <a href="{{ url_for('dashboard.index') }}"> 
+                    🏠 Início 
+                </a> 
+                
+                <a href="{{ url_for('materiais.index') }}"> 
+                    📦 Materiais
+                </a> 
+                
+                <a href="{{ url_for('veiculos.index') }}"> 
+                    🚚 Veículos 
+                </a> 
+                
+                <a href="{{ url_for('colaboradores.index') }}"> 
+                    👷 Colaboradores 
+                </a> 
+                
+                <a href="{{ url_for('usuarios.index') }}"> 
+                    👤 Usuários 
+                </a> 
+                
+                <a href="{{ url_for('movimentacoes.index') }}"> 
+                    📋 Movimentação de material 
+                </a> 
+                
+                <a href="#"> 
+                    📋 Listas 
+                </a> 
+                
+                <a href="#"> 
+                    📄 Notas Fiscais 
+                </a> 
+
+                <a href="#"> 
+                    🚛 Manifestos 
+                </a> 
+                
+                <a href="{{ url_for('relatorios.index') }}">
+                    📊 Relatórios 
+                </a> 
+                
+                <a href="#"> 
+                    ⚙️ Configurações 
+                </a> 
+            </nav> 
+    </aside>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="main-content">
+
+        <header class="topbar">
+
+            <div>
+                <strong>Controle de Almoxarifado</strong>
+            </div>
+
+            <div class="user-area">
+                <span>👤 {{ current_user.nome }}</span>
+
+                <a
+                    href="{{ url_for('auth.logout') }}"
+                    class="logout-button"
+                >
+                    Sair
+                </a>
+            </div>
+
+        </header>
+
+        <section class="dashboard">
+
+            <div class="page-header">
+
+                <div>
+                    <h1>Relatório de Movimentações</h1>
+                    <p>
+                        Histórico de entradas, saídas,
+                        retornos e consumos de materiais.
+                    </p>
+                </div>
+
+                <a
+                    href="{{ url_for('relatorios.index') }}"
+                    class="botao-voltar-relatorio"
+                >
+                    ← Voltar
+                </a>
+
+            </div>
+
+            <!-- INDICADORES DE MOVIMENTAÇÕES -->
+            <div class="movimentacoes-indicadores">
+
+                <div class="movimentacao-indicador">
+                    <h3>Total de Movimentações</h3>
+                    <p>{{ total_movimentacoes }}</p>
+                </div>
+
+                <div class="movimentacao-indicador">
+                    <h3>Entradas</h3>
+                    <p>{{ total_entradas }}</p>
+                </div>
+
+                <div class="movimentacao-indicador">
+                    <h3>Saídas</h3>
+                    <p>{{ total_saidas }}</p>
+                </div>
+
+                <div class="movimentacao-indicador">
+                    <h3>Retornos</h3>
+                    <p>{{ total_retornos }}</p>
+                </div>
+
+                <div class="movimentacao-indicador">
+                    <h3>Consumos</h3>
+                    <p>{{ total_consumos }}</p>
+                </div>
+
+            </div>
+
+            <!-- PESQUISA DE MOVIMENTAÇÕES -->
+            <form
+                method="GET"
+                action="{{ url_for('relatorios.movimentacoes') }}"
+                class="pesquisa-movimentacoes"
+            >
+
+                <input
+                    type="text"
+                    name="pesquisa"
+                    value="{{ pesquisa or '' }}"
+                    placeholder="Pesquisar por número da OS ou ID..."
+                    aria-label="Pesquisar movimentações"
+                >
+
+                <!-- FILTRO POR TIPO DE MOVIMENTAÇÃO -->
+                <select
+                    name="tipo"
+                    aria-label="Filtrar por tipo de movimentação"
+                >
+
+                    <option value="TODOS"
+                        {% if tipo == "TODOS" %}selected{% endif %}>
+                        Todas as movimentações
+                    </option>
+
+                    <option value="ENTRADA"
+                        {% if tipo == "ENTRADA" %}selected{% endif %}>
+                        Entradas
+                    </option>
+
+                    <option value="SAIDA"
+                        {% if tipo == "SAIDA" %}selected{% endif %}>
+                        Saídas
+                    </option>
+
+                    <option value="RETORNO"
+                        {% if tipo == "RETORNO" %}selected{% endif %}>
+                        Retornos
+                    </option>
+
+                    <option value="CONSUMO"
+                        {% if tipo == "CONSUMO" %}selected{% endif %}>
+                        Consumos
+                    </option>
+
+                </select>
+
+                <!-- FILTRO POR SITUAÇÃO -->
+                <select
+                    name="situacao"
+                    aria-label="Filtrar por situação da movimentação"
+                >
+
+                    <option value="TODAS"
+                        {% if situacao == "TODAS" %}selected{% endif %}>
+                        Todas as situações
+                    </option>
+
+                    <option value="ABERTA"
+                        {% if situacao == "ABERTA" %}selected{% endif %}>
+                        Abertas
+                    </option>
+
+                    <option value="ENCERRADA"
+                        {% if situacao == "ENCERRADA" %}selected{% endif %}>
+                        Encerradas
+                    </option>
+
+                </select>
+
+                <!-- FILTRO POR PERÍODO -->
+
+                <div class="filtro-data">
+                    <label for="data_inicial">Data Inicial</label>
+
+                    <input
+                        type="date"
+                        id="data_inicial"
+                        name="data_inicial"
+                        value="{{ data_inicial or '' }}"
+                    >
+                </div>
+
+                <div class="filtro-data">
+                    <label for="data_final">Data Final</label>
+
+                    <input
+                        type="date"
+                        id="data_final"
+                        name="data_final"
+                        value="{{ data_final or '' }}"
+                    >
+                </div>
+
+                <button type="submit" class="botao-pesquisar">
+                    🔍 Pesquisar
+                </button>
+
+                <a
+                    href="{{ url_for('relatorios.movimentacoes') }}"
+                    class="botao-limpar"
+                >
+                    ✕ Limpar
+                </a>
+
+                <!-- EXPORTAR RELATÓRIO DE MOVIMENTAÇÕES EM PDF -->
+                <button
+                    type="submit"
+                    class="botao-exportar-pdf"
+                    formaction="{{ url_for('relatorios.movimentacoes_pdf') }}"
+                    formmethod="GET"
+                >
+                    📄 Exportar PDF
+                </button>
+
+            </form>
+
+            <!-- TABELA DE MOVIMENTAÇÕES -->
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+                        <tr>
+                            <th>Identificação</th>
+                            <th>Data</th>
+                            <th>Tipo</th>
+                            <th>Colaborador</th>
+                            <th>Destino</th>
+                            <th>Situação</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for movimentacao in movimentacoes %}
+
+                        <tr>
+
+                            <td>
+                                {{ movimentacao.numero_os or
+                                   ("#" ~ movimentacao.id) }}
+                            </td>
+
+                            <td>
+                                {% if movimentacao.criado_em %}
+                                    {{ movimentacao.criado_em.strftime(
+                                        "%d/%m/%Y %H:%M"
+                                    ) }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+
+                            <td>{{ movimentacao.tipo }}</td>
+
+                            <td>
+                                {% if movimentacao.colaborador %}
+                                    {{ movimentacao.colaborador.nome }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {{ movimentacao.destino or "-" }}
+                            </td>
+
+                            <td>{{ movimentacao.status }}</td>
+
+                            <td>
+                                <a href="{{ url_for(
+                                    'movimentacoes.visualizar',
+                                    id=movimentacao.id
+                                ) }}">
+                                    👁 Visualizar
+                                </a>
+                            </td>
+
+                        </tr>
+
+                        {% else %}
+
+                        <tr>
+                            <td colspan="7"
+                                style="text-align:center; padding:30px;">
+                                Nenhuma movimentação encontrada.
+                            </td>
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<style>
+    .botao-voltar-relatorio {
+        display: inline-flex;
+        align-items: center;
+        padding: 10px 16px;
+        background: #e9ecef;
+        color: #343a40;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .botao-voltar-relatorio:hover {
+        background: #dee2e6;
+        color: #212529;
+    }
+
+    /* INDICADORES DE MOVIMENTAÇÕES */
+
+    .movimentacoes-indicadores {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 15px;
+        margin-bottom: 24px;
+    }
+
+    .movimentacao-indicador {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e9ecef;
+    }
+
+    .movimentacao-indicador h3 {
+        font-size: 13px;
+        color: #555;
+        margin: 0 0 12px;
+    }
+
+    .movimentacao-indicador p {
+        font-size: 28px;
+        font-weight: bold;
+        margin: 0;
+        color: #1f4e79;
+    }
+
+    @media (max-width: 1100px) {
+        .movimentacoes-indicadores {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 650px) {
+        .movimentacoes-indicadores {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* PESQUISA DE MOVIMENTAÇÕES */
+
+    .pesquisa-movimentacoes {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .pesquisa-movimentacoes input {
+        flex: 1;
+        min-width: 200px;
+        padding: 10px 12px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+    }
+
+    .botao-pesquisar {
+        padding: 10px 16px;
+        background: #1f4e79;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+
+    .botao-pesquisar:hover {
+        background: #163a5a;
+    }
+
+    .pesquisa-movimentacoes .botao-limpar {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 16px;
+        background: #e9ecef;
+        color: #070708;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .pesquisa-movimentacoes .botao-limpar:hover {
+        background: #dee2e6;
+        color: #212529;
+    }
+
+    /* FILTRO POR TIPO */
+
+    .pesquisa-movimentacoes select {
+        padding: 10px 12px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        background: white;
+        min-width: 190px;
+        font-size: 14px;
+        cursor: pointer;
+    }
+
+    .pesquisa-movimentacoes select {
+        padding: 10px 12px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        background: white;
+        min-width: 190px;
+        font-size: 14px;
+        cursor: pointer;
+    }
+
+    /* FILTROS POR PERÍODO */
+
+    .filtro-data {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .filtro-data label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #555;
+    }
+
+    .pesquisa-movimentacoes .filtro-data input {
+        flex: none;
+        min-width: 150px;
+        padding: 10px 12px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        background: white;
+        font-size: 14px;
+    }
+
+    /* BOTÃO EXPORTAR PDF */
+
+    .botao-exportar-pdf {
+        display: inline-block;
+        padding: 10px 16px;
+        background: #b91c1c;
+        color: #ffffff;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 500;
+    }
+
+    .botao-exportar-pdf:hover {
+        background: #991b1b;
+        color: white;
+    }
+
+    /* BOTÃO LIMPAR FILTROS */
+        .botao-limpar {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 16px;
+            background-color: #e9ecef;
+            color: #343a40;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+           transition: all 0.2s ease;
+        }
+
+        .botao-limpar:hover {
+            background-color: #dee2e6;
+            border-color: #adb5bd;
+            color: #212529;
+        }
+
+        .botao-limpar:active {
+            background-color: #ced4da;
+            transform: scale(0.98);
+        }
+
+        /* ALINHAMENTO DOS FILTROS E BOTÕES */
+
+        .pesquisa-movimentacoes {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 10px;
+        }
+
+        .pesquisa-movimentacoes > input[name="pesquisa"] {
+            flex: 1 1 300px;
+            min-width: 200px;
+        }
+
+        .pesquisa-movimentacoes > select {
+            flex: 0 1 180px;
+            min-width: 150px;
+        }
+
+        .pesquisa-movimentacoes .filtro-data {
+            flex: 0 0 150px;
+        }
+
+        .pesquisa-movimentacoes .botao-pesquisar,
+        .pesquisa-movimentacoes .botao-limpar,
+        .pesquisa-movimentacoes .botao-exportar-pdf {
+            width: auto;
+            flex: 0 0 auto;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 16px;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        /* TELAS MENORES */
+        @media (max-width: 768px) {
+            .pesquisa-movimentacoes > input[name="pesquisa"] {
+                flex: 1 1 100%;
+            }
+
+            .pesquisa-movimentacoes > select {
+                flex: 1 1 160px;
+            }
+
+            .pesquisa-movimentacoes .filtro-data {
+                flex: 1 1 140px;
+            }
+        }
+</style>
+
+{% endblock %}

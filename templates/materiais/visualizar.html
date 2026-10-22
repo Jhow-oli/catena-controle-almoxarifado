@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="login-container">
+
+    <div class="form-card material-view-card">
+
+        <div class="sidebar-logo"> 
+                <img 
+                    src="{{ url_for('static', filename='img/Catena logo.jpg') }}"
+                    alt="Catena Engenharia" 
+                    >  
+            </div>
+
+        <!-- NOME DO EMPRESA --> 
+             
+            <header class="sidebar-logo"> 
+                
+                <div> 
+                    CATENA ENGENHARIA 
+                </div>
+            </header>
+
+        </div>
+
+        <h1>
+            {{ material.nome }}
+        </h1>
+
+        <p>
+            Informações do material
+        </p>
+
+        <hr>
+
+        <div class="material-info">
+
+            <div>
+                <strong>Código</strong>
+                <span>{{ material.codigo }}</span>
+            </div>
+
+            <div>
+                <strong>Descrição</strong>
+                <span>
+                    {{ material.descricao or "-" }}
+                </span>
+            </div>
+
+            <div>
+                <strong>Unidade</strong>
+                <span>
+                    {{ material.unidade }}
+                </span>
+            </div>
+
+            <div>
+                <strong>Localização</strong>
+                <span>
+                    {{ material.localizacao or "-" }}
+                </span>
+            </div>
+
+            <div>
+                <strong>Status</strong>
+
+                {% if material.ativo %}
+
+                    <span class="status-active">
+                        Ativo
+                    </span>
+
+                {% else %}
+
+                    <span class="status-inactive">
+                        Inativo
+                    </span>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

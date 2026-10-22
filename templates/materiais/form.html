@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="layout">
+
+    <aside class="sidebar"> 
+        
+        <!-- LOGO CATENA --> 
+
+         <div class="sidebar-logo"> 
+            <img 
+                src="{{ url_for('static', filename='img/Catena logo.jpg') }}"
+                alt="Catena Engenharia" 
+                > 
+            </div> 
+            
+            <!-- NOME DO EMPRESA --> 
+             
+            <header class="sidebar-logo"> 
+                
+                <div> 
+                    CATENA ENGENHARIA 
+                </div>
+            </header> 
+            
+            <nav> 
+                
+                <a href="{{ url_for('dashboard.index') }}"> 
+                    🏠 Início 
+                </a> 
+                
+                <a href="{{ url_for('materiais.index') }}"> 
+                    📦 Materiais
+                </a> 
+                
+                <a href="{{ url_for('veiculos.index') }}"> 
+                    🚚 Veículos 
+                </a> 
+                
+                <a href="{{ url_for('colaboradores.index') }}"> 
+                    👷 Colaboradores 
+                </a> 
+                
+                <a href="{{ url_for('usuarios.index') }}"> 
+                    👤 Usuários 
+                </a> 
+                
+                <a href="{{ url_for('movimentacoes.index') }}"> 
+                    📋 Movimentação de material 
+                </a> 
+                
+                <a href="#"> 
+                    📋 Listas 
+                </a> 
+                
+                <a href="#"> 
+                    📄 Notas Fiscais 
+                </a> 
+
+                <a href="#"> 
+                    🚛 Manifestos 
+                </a> 
+                
+                <a href="{{ url_for('relatorios.index') }}">
+                    📊 Relatórios 
+                </a> 
+                
+                <a href="#"> 
+                    ⚙️ Configurações 
+                </a> 
+            </nav> 
+    </aside>
+
+
+    <main class="main-content">
+
+        <header class="topbar">
+
+            <div>
+                <strong>
+                    Controle de Almoxarifado
+                </strong>
+            </div>
+
+            <div class="user-area">
+
+                <span>
+                    👤 {{ current_user.nome }}
+                </span>
+
+                <a
+                    href="{{ url_for('auth.logout') }}"
+                    class="logout-button"
+                >
+                    Sair
+                </a>
+
+            </div>
+
+        </header>
+
+
+        <section class="dashboard">
+
+            <h1>
+
+                {% if material %}
+                    Editar material
+                {% else %}
+                    Novo material
+                {% endif %}
+
+            </h1>
+
+
+            <div class="form-card">
+
+                <form method="POST">
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label>
+                                Código *
+                            </label>
+
+                            <input
+                                type="text"
+                                name="codigo"
+                                value="{{ material.codigo if material else '' }}"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Nome *
+                            </label>
+
+                            <input
+                                type="text"
+                                name="nome"
+                                value="{{ material.nome if material else '' }}"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="form-group form-full">
+
+                            <label>
+                                Descrição
+                            </label>
+
+                            <textarea
+                                name="descricao"
+                                rows="4"
+                            >{{ material.descricao if material else '' }}</textarea>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Unidade
+                            </label>
+
+                            <select name="unidade">
+
+                                <option value="UN">
+                                    Unidade
+                                </option>
+
+                                <option value="KG">
+                                    Quilograma
+                                </option>
+
+                                <option value="M">
+                                    Metro
+                                </option>
+
+                                <option value="L">
+                                    Litro
+                                </option>
+
+                                <option value="CX">
+                                    Caixa
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Quantidade
+                            </label>
+
+                            <input
+                                type="number"
+                                name="quantidade"
+                                step="0.001"
+                                min="0"
+                                value="{{ material.quantidade if material else 0 }}"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Estoque mínimo
+                            </label>
+
+                            <input
+                                type="number"
+                                name="estoque_minimo"
+                                step="0.001"
+                                min="0"
+                                value="{{ material.estoque_minimo if material else 0 }}"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Localização
+                            </label>
+
+                            <input
+                                type="text"
+                                name="localizacao"
+                                placeholder="Ex.: Estante A / Prateleira 03"
+                                value="{{ material.localizacao if material else '' }}"
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-actions">
+
+                        <a
+                            href="{{ url_for('materiais.index') }}"
+                            class="button-secondary"
+                        >
+                            Cancelar
+                        </a>
+
+                        <button
+                            type="submit"
+                            class="button-primary"
+                        >
+                            Salvar material
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+{% endblock %}

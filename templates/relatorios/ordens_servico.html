@@ -1,0 +1,621 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="layout">
+
+    <!-- MENU LATERAL -->
+    <aside class="sidebar">
+
+        <div class="sidebar-logo">
+            <img
+                src="{{ url_for('static', filename='img/Catena logo.jpg') }}"
+                alt="Catena Engenharia"
+            >
+        </div>
+
+        <header class="sidebar-logo">
+            <div>CATENA ENGENHARIA</div>
+        </header>
+
+        <nav>
+            <a href="{{ url_for('dashboard.index') }}">
+                🏠 Início
+            </a>
+
+            <a href="{{ url_for('materiais.index') }}">
+                📦 Materiais
+            </a>
+
+            <a href="{{ url_for('veiculos.index') }}">
+                🚚 Veículos
+            </a>
+
+            <a href="{{ url_for('colaboradores.index') }}">
+                👷 Colaboradores
+            </a>
+
+            <a href="{{ url_for('usuarios.index') }}">
+                👤 Usuários
+            </a>
+
+            <a href="{{ url_for('movimentacoes.index') }}">
+                📋 Movimentação de material
+            </a>
+
+            <a href="#">📋 Listas</a>
+            <a href="#">📄 Notas Fiscais</a>
+            <a href="#">🚛 Manifestos</a>
+
+            <a href="{{ url_for('relatorios.index') }}">
+                📊 Relatórios
+            </a>
+
+            <a href="#">⚙️ Configurações</a>
+        </nav>
+
+    </aside>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="main-content">
+
+        <header class="topbar">
+
+            <div>
+                <strong>Controle de Almoxarifado</strong>
+            </div>
+
+            <div class="user-area">
+                <span>👤 {{ current_user.nome }}</span>
+
+                <a
+                    href="{{ url_for('auth.logout') }}"
+                    class="logout-button"
+                >
+                    Sair
+                </a>
+            </div>
+
+        </header>
+
+        <section class="dashboard">
+
+            <div class="page-header">
+
+                <div>
+                    <h1>Relatório de Ordens de Serviço</h1>
+
+                    <p>
+                        Consulte as ordens de serviço,
+                        seus retornos e consumos de materiais.
+                    </p>
+                </div>
+
+                <a
+                    href="{{ url_for('relatorios.index') }}"
+                    class="button-secondary"
+                >
+                    ← Voltar
+                </a>
+
+            </div>
+
+            <!-- INDICADORES DE ORDENS DE SERVIÇO -->
+
+            <div class="os-indicadores">
+
+                <div class="os-indicador">
+                    <span>Total de OS</span>
+                    <strong>{{ total_os }}</strong>
+                </div>
+
+                <div class="os-indicador">
+                    <span>OS Abertas</span>
+                    <strong>{{ os_abertas }}</strong>
+                </div>
+
+                <div class="os-indicador">
+                    <span>OS Encerradas</span>
+                    <strong>{{ os_encerradas }}</strong>
+                </div>
+
+            </div>
+
+            <style>
+                .os-indicadores {
+                    display: grid;
+                    grid-template-columns: repeat(3, minmax(0, 1fr));
+                    gap: 16px;
+                    margin-bottom: 24px;
+                }
+
+                .os-indicador {
+                    background: var(--card-bg, #ffffff);
+                    color: #263238;
+                    border: 1px solid #dce2e6;
+                    border-radius: 10px;
+                    padding: 20px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                }
+
+                .os-indicador span {
+                    font-size: 14px;
+                    font-weight: 500;
+                }
+
+                .os-indicador strong {
+                    font-size: 30px;
+                    font-weight: 700;
+                }
+
+                @media (max-width: 700px) {
+                    .os-indicadores {
+                        grid-template-columns: 1fr;
+                    }
+                }
+
+                /* TABELA DE ORDENS DE SERVIÇO */
+
+                .table-container {
+                    overflow-x: auto;
+                }
+
+                .os-tabela {
+                    width: 100%;
+                    border-collapse: collapse;
+                    background: #ffffff;
+                }
+
+                .os-tabela th,
+                .os-tabela td {
+                    padding: 14px;
+                    border-bottom: 1px solid #e5e7eb;
+                    text-align: left;
+                }
+
+                .os-tabela th {
+                    background: #f1f5f9;
+                    font-weight: 600;
+                    color: #334155;
+                }
+
+                .os-tabela td {
+                    color: #334155;
+                }
+
+                .os-tabela tbody tr:hover {
+                    background: #f8fafc;
+                }
+
+                .os-status {
+                    display: inline-block;
+                    padding: 5px 10px;
+                    border-radius: 6px;
+                    font-size: 12px;
+                    font-weight: 600;
+                }
+
+                .os-status.aberta {
+                    background: #fef3c7;
+                    color: #92400e;
+                }
+
+                .os-status.encerrada {
+                    background: #dcfce7;
+                    color: #166534;
+                }
+
+                .os-visualizar {
+                    display: inline-block;
+                    padding: 7px 12px;
+                    background: #2563eb;
+                    color: white;
+                    border-radius: 6px;
+                    text-decoration: none;
+                }
+
+                .os-visualizar:hover {
+                    background: #1d4ed8;
+                }
+
+                .os-vazio {
+                    text-align: center !important;
+                    padding: 25px !important;
+                }
+
+                /* FILTROS E BOTÕES — LAYOUT RESPONSIVO */
+
+                .os-filtros {
+                    display: flex;
+                    align-items: flex-end;
+                    flex-wrap: wrap;
+                    gap: 8px;
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                    margin-bottom: 20px;
+                }
+
+                .os-filtros .os-pesquisa {
+                    flex: 1 1 280px;
+                    min-width: 180px;
+                    width: auto;
+                    box-sizing: border-box;
+                }
+
+                .os-filtros .os-select {
+                    flex: 0 1 150px;
+                    min-width: 130px;
+                }
+
+                .os-filtros .os-campo-data {
+                    flex: 0 1 125px;
+                    min-width: 115px;
+                }
+
+                .os-filtros .os-data {
+                    width: 100%;
+                    min-width: 0;
+                    box-sizing: border-box;
+                }
+
+                .os-filtros .os-botao-pesquisar,
+                .os-filtros .os-botao-limpar,
+                .os-filtros .os-botao-pdf {
+                    flex: 0 0 auto;
+                    min-height: 42px;
+                    padding: 0 10px;
+                    white-space: nowrap;
+                }
+
+                @media (max-width: 900px) {
+                    .os-filtros .os-pesquisa {
+                        flex-basis: 100%;
+                    }
+                }
+
+                .os-pesquisa {
+                    flex: 1;
+                    min-width: 200px;
+                    padding: 11px 14px;
+                    border: 1px solid #cbd5e1;
+                    border-radius: 6px;
+                    font-size: 14px;
+                }
+
+                .os-botao-pesquisar,
+                .os-botao-limpar {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    min-height: 42px;
+                    padding: 0 18px;
+                    border-radius: 6px;
+                    font-size: 14px;
+                    font-weight: 600;
+                    text-decoration: none;
+                    cursor: pointer;
+                }
+
+                .os-botao-pesquisar {
+                    background: #2563eb;
+                    color: white;
+                    border: none;
+                }
+
+                .os-botao-limpar {
+                    background: #e2e8f0;
+                    color: #334155;
+                    border: 1px solid #cbd5e1;
+                }
+
+                /* FILTRO POR SITUAÇÃO */
+
+                .os-select {
+                    min-height: 42px;
+                    padding: 0 12px;
+                    border: 1px solid #cbd5e1;
+                    border-radius: 6px;
+                    background: #ffffff;
+                    color: #334155;
+                    font-size: 14px;
+                    min-width: 180px;
+                    cursor: pointer;
+                }
+
+                .os-select:focus {
+                    outline: none;
+                    border-color: #2563eb;
+                }
+
+                /* CAMPOS DE DATA DO RELATÓRIO DE OS */
+
+                .os-campo-data {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 5px;
+                }
+
+                .os-campo-data label {
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: #475569;
+                }
+
+                .os-data {
+                    min-height: 42px;
+                    padding: 0 10px;
+                    border: 1px solid #cbd5e1;
+                    border-radius: 6px;
+                    background: #ffffff;
+                    color: #334155;
+                    font-size: 14px;
+                }
+
+                .os-data:focus {
+                    outline: none;
+                    border-color: #2563eb;
+                }
+
+                /* BOTÃO EXPORTAR PDF — ORDENS DE SERVIÇO */
+
+                .os-botao-pdf {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    min-height: 42px;
+                    padding: 0 18px;
+                    border: none;
+                    border-radius: 6px;
+                    background-color: #b91c1c;
+                    color: #ffffff;
+                    font-size: 14px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    white-space: nowrap;
+                }
+
+                .os-botao-pdf:hover {
+                    background-color: #991b1b;
+                }
+
+                /* CORREÇÃO DO ALINHAMENTO DOS FILTROS DE OS */
+
+                .os-filtros {
+                    display: flex !important;
+                    flex-direction: row !important;
+                    align-items: flex-end !important;
+                    flex-wrap: nowrap !important;
+                    gap: 8px !important;
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+
+                .os-filtros .os-pesquisa {
+                    flex: 1 1 0 !important;
+                    width: 0 !important;
+                    min-width: 100px !important;
+                }
+
+                .os-filtros .os-select {
+                    flex: 0 0 140px !important;
+                    width: 140px !important;
+                    min-width: 0 !important;
+                }
+
+                .os-filtros .os-campo-data {
+                    flex: 0 0 120px !important;
+                    width: 120px !important;
+                    min-width: 0 !important;
+                }
+
+                .os-filtros .os-data {
+                    width: 100% !important;
+                    min-width: 0 !important;
+                    box-sizing: border-box;
+                }
+
+                .os-filtros .os-botao-pesquisar,
+                .os-filtros .os-botao-limpar,
+                .os-filtros .os-botao-pdf {
+                    display: inline-flex !important;
+                    flex: 0 0 auto !important;
+                    width: auto !important;
+                    min-width: 0 !important;
+                    max-width: none !important;
+                    margin: 0 !important;
+                    padding: 0 10px !important;
+                    white-space: nowrap;
+                }
+
+                @media (max-width: 1100px) {
+                    .os-filtros {
+                        flex-wrap: wrap !important;
+                    }
+
+                    .os-filtros .os-pesquisa {
+                        flex: 1 1 100% !important;
+                        width: 100% !important;
+                    }
+                }
+            </style>
+
+            <!-- FILTRO POR NÚMERO DA OS -->
+
+            <form
+                method="GET"
+                action="{{ url_for('relatorios.ordens_servico') }}"
+                class="os-filtros"
+            >
+
+                <input
+                    type="text"
+                    name="pesquisa"
+                    value="{{ pesquisa }}"
+                    placeholder="Pesquisar número da OS..."
+                    class="os-pesquisa"
+                >
+
+                <!-- FILTRO POR SITUAÇÃO -->
+
+                <select name="situacao" class="os-select">
+
+                    <option value="TODAS"
+                        {% if situacao == 'TODAS' %}selected{% endif %}>
+                        Todas as situações
+                    </option>
+
+                    <option value="ABERTA"
+                        {% if situacao == 'ABERTA' %}selected{% endif %}>
+                        Abertas
+                    </option>
+
+                    <option value="ENCERRADA"
+                        {% if situacao == 'ENCERRADA' %}selected{% endif %}>
+                        Encerradas
+                    </option>
+
+                </select>
+
+                <!-- FILTRO POR PERÍODO -->
+
+                <div class="os-campo-data">
+                    <label for="data_inicial">Data inicial</label>
+
+                    <input
+                        type="date"
+                        id="data_inicial"
+                        name="data_inicial"
+                        value="{{ data_inicial or '' }}"
+                        class="os-data"
+                    >
+                </div>
+
+                <div class="os-campo-data">
+                    <label for="data_final">Data final</label>
+
+                    <input
+                        type="date"
+                        id="data_final"
+                        name="data_final"
+                        value="{{ data_final or '' }}"
+                        class="os-data"
+                    >
+                </div>
+
+                <button type="submit" class="os-botao-pesquisar">
+                    🔍 Pesquisar
+                </button>
+
+                <a
+                    href="{{ url_for('relatorios.ordens_servico') }}"
+                    class="os-botao-limpar"
+                >
+                    Limpar
+                </a>
+            
+                <button
+                    type="submit"
+                    class="os-botao-pdf"
+                    formaction="{{ url_for('relatorios.ordens_servico_pdf') }}"
+                    formmethod="GET"
+                >
+                    📄 Exportar PDF
+                </button>
+
+            </form>
+
+            <!-- TABELA DE ORDENS DE SERVIÇO -->
+
+            <div class="table-container">
+
+                <table class="os-tabela">
+
+                    <thead>
+                        <tr>
+                            <th>Número da OS</th>
+                            <th>Data</th>
+                            <th>Colaborador</th>
+                            <th>Destino</th>
+                            <th>Situação</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for ordem in ordens %}
+
+                        <tr>
+
+                            <td>
+                                <strong>{{ ordem.numero_os }}</strong>
+                            </td>
+
+                            <td>
+                                {% if ordem.data_movimentacao %}
+                                    {{ ordem.data_movimentacao.strftime('%d/%m/%Y %H:%M') }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {{ ordem.colaborador.nome if ordem.colaborador else '-' }}
+                            </td>
+
+                            <td>
+                                {{ ordem.destino or '-' }}
+                            </td>
+
+                            <td>
+                                {% if ordem.status == 'ABERTA' %}
+                                    <span class="os-status aberta">
+                                        Aberta
+                                    </span>
+                                {% elif ordem.status == 'ENCERRADA' %}
+                                    <span class="os-status encerrada">
+                                        Encerrada
+                                    </span>
+                                {% else %}
+                                    {{ ordem.status }}
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                <a
+                                    href="{{ url_for('movimentacoes.visualizar', id=ordem.id) }}"
+                                    class="os-visualizar"
+                                >
+                                    Visualizar
+                                </a>
+                            </td>
+
+                        </tr>
+
+                        {% else %}
+
+                        <tr>
+                            <td colspan="6" class="os-vazio">
+                                Nenhuma Ordem de Serviço encontrada.
+                            </td>
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+{% endblock %}
