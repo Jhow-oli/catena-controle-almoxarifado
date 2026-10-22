@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OS {{ movimentacao.numero_os or movimentacao.id }}</title>
+
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: Arial, sans-serif;
+            color: #222;
+            background: #eee;
+            margin: 0;
+            font-size: 12px;
+        }
+
+        .folha {
+            background: white;
+            width: 210mm;
+            min-height: 297mm;
+            margin: 20px auto;
+            padding: 15mm;
+        }
+
+        .cabecalho {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            border-bottom: 2px solid #1c3452;
+            padding-bottom: 15px;
+        }
+
+        .logo { width: 95px; }
+
+        h1 { font-size: 19px; margin: 0 0 5px; }
+        h2 { font-size: 14px; margin-top: 25px; }
+
+        .dados {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .campo {
+            border: 1px solid #ccc;
+            padding: 9px;
+            overflow-wrap: anywhere;
+        }
+
+        .campo strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .largura-total { grid-column: 1 / -1; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+
+        th, td {
+            border: 1px solid #bbb;
+            padding: 8px;
+            text-align: left;
+            overflow-wrap: anywhere;
+        }
+
+        th { background: #f0f0f0; }
+
+        tr { break-inside: avoid; }
+
+        .assinaturas {
+            display: flex;
+            gap: 30px;
+            margin-top: 35mm;
+            padding-top: 12mm;
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        .assinatura {
+            flex: 1;
+            border-top: 1px solid #333;
+            text-align: center;
+            padding-top: 10px;
+            min-height: 35px;
+        }
+
+        .acoes {
+            text-align: center;
+            margin: 20px;
+        }
+
+        button {
+            padding: 12px 25px;
+            cursor: pointer;
+        }
+
+        @page {
+            size: A4;
+            margin: 12mm;
+        }
+
+        @media print {
+            body { background: white; }
+            .folha {
+                width: 100%;
+                min-height: 0;
+                margin: 0;
+                padding: 0;
+            }
+            .acoes { display: none; }
+        }
+
+        @media screen and (max-width: 850px) {
+            .folha {
+                width: 100%;
+                min-height: 0;
+                margin: 0;
+                padding: 20px;
+            }
+        }
+
+        .rodape-impressao {
+            display: none;
+        }
+
+        @media print {
+            .rodape-impressao {
+                display: flex;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                justify-content: space-between;
+                align-items: center;
+                font-size: 10px;
+                color: #777;
+                background: white;
+                padding-top: 5px;
+                border-top: 1px solid #ddd;
+            }
+
+            .folha {
+                padding-bottom: 20mm;
+            }
+
+            .assinaturas {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+
+            @page {
+                size: A4;
+                margin: 15mm 12mm 25mm;
+            }
+        }
+        
+    </style>
+</head>
+
+<body>
+
+<div class="acoes">
+    <button type="button" onclick="window.print()">
+        🖨️ Imprimir / Salvar PDF
+    </button>
+</div>
+
+<div class="folha">
+
+    <div class="cabecalho">
+        <img
+            class="logo"
+            src="{{ url_for('static', filename='img/Catena logo.jpg') }}"
+            alt="Catena Engenharia"
+        >
+
+        <div>
+            <h1>CATENA ENGENHARIA</h1>
+            <strong>
+                ORDEM DE SERVIÇO —
+                {% if movimentacao.tipo == "SAIDA" %}
+                    SAÍDA DE MATERIAIS
+                {% elif movimentacao.tipo == "RETORNO" %}
+                    RETORNO DE MATERIAIS
+                {% elif movimentacao.tipo == "CONSUMO" %}
+                    CONSUMO DE MATERIAIS
+                {% endif %}
+            </strong>
+        </div>
+    </div>
+
+    <div class="dados">
+        <div class="campo">
+            <strong>Número da OS</strong>
+            {{ movimentacao.numero_os or ("#" ~ movimentacao.id) }}
+        </div>
+
+        <div class="campo">
+            <strong>Data</strong>
+            {{ movimentacao.data_movimentacao.strftime("%d/%m/%Y %H:%M") }}
+        </div>
+
+        <div class="campo">
+            <strong>Status</strong>
+            {{ movimentacao.status }}
+        </div>
+
+        <div class="campo">
+            <strong>Responsável pelo registro</strong>
+            {{ movimentacao.usuario.nome if movimentacao.usuario else "-" }}
+        </div>
+
+        <div class="campo">
+            <strong>Colaborador</strong>
+            {{ movimentacao.colaborador.nome if movimentacao.colaborador else "-" }}
+        </div>
+
+        <div class="campo">
+            <strong>Veículo</strong>
+            {% if movimentacao.veiculo %}
+                {{ movimentacao.veiculo.marca }}
+                {{ movimentacao.veiculo.modelo }}
+                — {{ movimentacao.veiculo.placa }}
+            {% else %}
+                -
+            {% endif %}
+        </div>
+
+        <div class="campo largura-total">
+            <strong>Destino</strong>
+            {{ movimentacao.destino or "-" }}
+        </div>
+    </div>
+
+    {% if movimentacao.tipo == "SAIDA" %}
+
+    <h2>Materiais de saída</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Código</th>
+                <th>Material</th>
+                <th>Unidade</th>
+                <th>Retirado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dados in itens_resumo %}
+            <tr>
+                <td>{{ dados.item.material.codigo }}</td>
+                <td>{{ dados.item.material.nome }}</td>
+                <td>{{ dados.item.material.unidade }}</td>
+                <td>{{ "%.3f"|format(dados.retirado) }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7">Nenhum material registrado.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Histórico de retornos e consumos</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>OS vinculada</th>
+                <th>Data</th>
+                <th>Tipo</th>
+                <th>Material</th>
+                <th>Quantidade</th>
+                <th>Unidade</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for vinculada in movimentacoes_vinculadas %}
+                {% for item in vinculada.itens %}
+                <tr>
+                    <td>
+                        {{ vinculada.numero_os or ("#" ~ vinculada.id) }}
+                    </td>
+                    <td>
+                        {{ vinculada.data_movimentacao.strftime("%d/%m/%Y %H:%M") }}
+                    </td>
+                    <td>{{ vinculada.tipo }}</td>
+                    <td>{{ item.material.nome }}</td>
+                    <td>
+                        {% if vinculada.tipo == "RETORNO" %}
+                            {{ "%.3f"|format(item.quantidade_retorno) }}
+                        {% else %}
+                            {{ "%.3f"|format(item.quantidade_consumida) }}
+                        {% endif %}
+                    </td>
+                    <td>{{ item.material.unidade }}</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+            <tr>
+                <td colspan="6">
+                    Nenhum retorno ou consumo registrado.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% else %}
+
+    <h2>
+        Materiais —
+        {{ "Retorno" if movimentacao.tipo == "RETORNO" else "Consumo" }}
+    </h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Código</th>
+                <th>Material</th>
+                <th>Unidade</th>
+                <th>Quantidade</th>
+                <th>Observação</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in movimentacao.itens %}
+            <tr>
+                <td>{{ item.material.codigo }}</td>
+                <td>{{ item.material.nome }}</td>
+                <td>{{ item.material.unidade }}</td>
+                <td>
+                    {% if movimentacao.tipo == "RETORNO" %}
+                        {{ "%.3f"|format(item.quantidade_retorno) }}
+                    {% else %}
+                        {{ "%.3f"|format(item.quantidade_consumida) }}
+                    {% endif %}
+                </td>
+                <td>{{ item.observacoes or "-" }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5">Nenhum material registrado.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% endif %}
+
+    <h2>Materiais retornados ao almoxarifado</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Código</th>
+            <th>Material</th>
+            <th>Unidade</th>
+            <th>Quantidade retornada</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+        {% if movimentacao.tipo == "SAIDA" %}
+
+            {% for dados in itens_resumo %}
+
+                {% if dados.retornado > 0 %}
+
+                <tr>
+                    <td>{{ dados.item.material.codigo }}</td>
+                    <td>{{ dados.item.material.nome }}</td>
+                    <td>{{ dados.item.material.unidade }}</td>
+                    <td>
+                        {{ "%.3f"|format(dados.retornado) }}
+                    </td>
+                </tr>
+
+                {% endif %}
+
+            {% endfor %}
+
+        {% elif movimentacao.tipo == "RETORNO" %}
+
+            {% for item in movimentacao.itens %}
+
+                {% if item.quantidade_retorno > 0 %}
+
+                <tr>
+                    <td>{{ item.material.codigo }}</td>
+                    <td>{{ item.material.nome }}</td>
+                    <td>{{ item.material.unidade }}</td>
+                    <td>
+                        {{ "%.3f"|format(item.quantidade_retorno) }}
+                    </td>
+                </tr>
+
+                {% endif %}
+
+            {% endfor %}
+
+        {% endif %}
+
+        <div class="rodape-impressao">
+            <span>CATENA ENGENHARIA | Controle de Almoxarifado</span>
+            <span>Ordem de Serviço {{ movimentacao.numero_os or movimentacao.id }}</span>
+        </div>
+
+    </tbody>
+</table>
+<div class="assinaturas">
+
+    <div class="assinatura">
+        Responsável pela saída do material
+    </div>
+
+    <div class="assinatura">
+        Responsável pelo retorno do material
+    </div>
+
+</div>

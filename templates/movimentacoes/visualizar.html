@@ -121,12 +121,50 @@
 
                 </div>
 
-                <a
-                    href="{{ url_for('movimentacoes.index') }}"
-                    class="button-secondary"
-                >
-                    ← Voltar
-                </a>
+                <div style="
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                    width: 150px;
+                ">
+
+                    {% if movimentacao.tipo in ["SAIDA", "RETORNO", "CONSUMO"] %}
+                    <a
+                        href="{{ url_for('movimentacoes.imprimir_os_pdf', id=movimentacao.id) }}"
+                        target="_blank"
+                        rel="noopener"
+                        class="button-secondary"
+                        style="
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            width: 100%;
+                            min-height: 36px;
+                            box-sizing: border-box;
+                            text-decoration: none;
+                        "
+                    >
+                        Imprimir OS
+                    </a>
+                    {% endif %}
+
+                    <a
+                        href="{{ url_for('movimentacoes.index') }}"
+                        class="button-secondary"
+                        style="
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            width: 100%;
+                            min-height: 36px;
+                            box-sizing: border-box;
+                            text-decoration: none;
+                        "
+                    >
+                        ← Voltar
+                    </a>
+
+                </div>
 
             </div>
 

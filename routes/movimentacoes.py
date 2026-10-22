@@ -13,7 +13,7 @@ from flask import (
     request,
     redirect,
     url_for,
-    flash
+    flash,
 )
 
 from flask_login import current_user
@@ -29,6 +29,27 @@ from database.models import (
 )
 
 from utils.decorators import admin_required
+
+import os
+from io import BytesIO
+from xml.sax.saxutils import escape
+
+from flask import current_app, send_file
+
+from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import cm
+from reportlab.platypus import (
+    SimpleDocTemplate,
+    Paragraph,
+    Table,
+    TableStyle,
+    Spacer,
+    KeepTogether,
+    Image
+)
 
 
 movimentacoes_bp = Blueprint(
@@ -1515,4 +1536,422 @@ def visualizar(id):
         movimentacoes_vinculadas=movimentacoes_vinculadas
     )
 
+@movimentacoes_bp.route("/imprimir-os/<int:id>")
+@admin_required
+def imprimir_os(id):
+
+    movimentacao = Movimentacao.query.get_or_404(id)
+
+    if movimentacao.tipo not in ["SAIDA", "RETORNO", "CONSUMO"]:
+        flash(
+            "A impressão não está disponível para esta movimentação.",
+            "warning"
+        )
+        return redirect(
+            url_for("movimentacoes.visualizar", id=id)
+        )
+
+    itens_resumo = []
+    movimentacoes_vinculadas = []
+
+    if movimentacao.tipo == "SAIDA":
+
+        for item in movimentacao.itens:
+
+            totais = (
+                db.session.query(
+                    func.coalesce(
+                        func.sum(MovimentacaoItem.quantidade_retorno), 0
+                    ),
+                    func.coalesce(
+                        func.sum(MovimentacaoItem.quantidade_consumida), 0
+                    )
+                )
+                .filter(
+                    MovimentacaoItem.movimentacao_item_origem_id == item.id
+                )
+                .first()
+            )
+
+            retirado = Decimal(item.quantidade or 0)
+            retornado = Decimal(totais[0] or 0)
+            consumido = Decimal(totais[1] or 0)
+
+            itens_resumo.append({
+                "item": item,
+                "retirado": retirado,
+                "retornado": retornado,
+                "consumido": consumido,
+                "pendente": retirado - retornado - consumido
+            })
+
+        movimentacoes_vinculadas = (
+            Movimentacao.query
+            .filter(
+                Movimentacao.movimentacao_origem_id == movimentacao.id,
+                Movimentacao.tipo.in_(["RETORNO", "CONSUMO"])
+            )
+            .order_by(
+                Movimentacao.data_movimentacao.asc(),
+                Movimentacao.id.asc()
+            )
+            .all()
+        )
+
+    return render_template(
+        "movimentacoes/imprimir_os.html",
+        movimentacao=movimentacao,
+        itens_resumo=itens_resumo,
+        movimentacoes_vinculadas=movimentacoes_vinculadas
+    )
+
+@movimentacoes_bp.route("/imprimir-os-pdf/<int:id>")
+@admin_required
+def imprimir_os_pdf(id):
+
+    movimentacao = Movimentacao.query.get_or_404(id)
+
+    if movimentacao.tipo != "SAIDA":
+        flash("Selecione uma OS original de saída.", "warning")
+        return redirect(url_for("movimentacoes.visualizar", id=id))
+
+    buffer = BytesIO()
+
+    documento = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        leftMargin=1.5 * cm,
+        rightMargin=1.5 * cm,
+        topMargin=1.2 * cm,
+        bottomMargin=1.5 * cm
+    )
+
+    estilos = getSampleStyleSheet()
+    elementos = []
+
+    estilo_texto = ParagraphStyle(
+        "TextoOSCatena",
+        parent=estilos["Normal"],
+        fontSize=8,
+        leading=11
+    )
+
+    estilo_titulo = ParagraphStyle(
+        "TituloOSCatena",
+        parent=estilos["Heading2"],
+        fontSize=12,
+        spaceBefore=14,
+        spaceAfter=8
+    )
+
+    def texto(valor):
+        return Paragraph(
+            escape(str(valor if valor is not None else "-")),
+            estilo_texto
+        )
+
+    def criar_tabela(cabecalho, linhas, larguras):
+        dados = [[
+            Paragraph(
+                f"<b>{escape(str(coluna))}</b>",
+                ParagraphStyle(
+                    "CabecalhoTabelaOS",
+                    parent=estilos["Normal"],
+                    fontName="Helvetica-Bold",
+                    fontSize=8,
+                    leading=10,
+                    textColor=colors.white
+                )
+            )
+            for coluna in cabecalho
+        ]]
+
+        dados.extend(
+            [texto(valor) for valor in linha]
+            for linha in linhas
+        )
+
+        tabela = Table(
+            dados,
+            colWidths=larguras,
+            repeatRows=1,
+            hAlign="LEFT"
+        )
+
+        tabela.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0),
+             colors.HexColor("#1f4e79")),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+            ("GRID", (0, 0), (-1, -1),
+             0.3, colors.lightgrey),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("TOPPADDING", (0, 0), (-1, -1), 7),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+        ]))
+
+        # Cabeçalho branco sobre fundo azul
+        for celula in dados[0]:
+            celula.style.textColor = colors.white
+
+        return tabela
+
+    # CABEÇALHO
+    caminho_logo = os.path.join(
+        current_app.static_folder,
+        "img",
+        "Catena logo.jpg"
+    )
+
+    titulo = Paragraph(
+        "<b>CATENA ENGENHARIA</b><br/>"
+        "ORDEM DE SERVIÇO — SAÍDA DE MATERIAIS",
+        estilos["Heading2"]
+    )
+
+    if os.path.exists(caminho_logo):
+        logo = Image(
+            caminho_logo,
+            width=2.3 * cm,
+            height=2.3 * cm,
+            kind="proportional"
+        )
+        cabecalho = Table(
+            [[logo, titulo]],
+            colWidths=[3 * cm, 15 * cm]
+        )
+        elementos.append(cabecalho)
+    else:
+        elementos.append(titulo)
+
+    elementos.append(Spacer(1, 0.5 * cm))
+
+    # DADOS DA OS
+    veiculo = "-"
+    if movimentacao.veiculo:
+        v = movimentacao.veiculo
+        veiculo = f"{v.marca} {v.modelo} - {v.placa}"
+
+    dados_os = [
+        ["Número da OS", movimentacao.numero_os or f"#{id}"],
+        ["Data", movimentacao.data_movimentacao.strftime(
+            "%d/%m/%Y %H:%M"
+        )],
+        ["Status", movimentacao.status],
+        ["Colaborador",
+         movimentacao.colaborador.nome
+         if movimentacao.colaborador else "-"],
+        ["Responsável pelo registro",
+         movimentacao.usuario.nome
+         if movimentacao.usuario else "-"],
+        ["Veículo", veiculo],
+        ["Destino", movimentacao.destino or "-"]
+    ]
+
+    tabela_dados = Table(
+        [[texto(campo), texto(valor)] for campo, valor in dados_os],
+        colWidths=[5 * cm, 13 * cm]
+    )
+
+    tabela_dados.setStyle(TableStyle([
+        ("GRID", (0, 0), (-1, -1), 0.3, colors.lightgrey),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6)
+    ]))
+
+    elementos.append(tabela_dados)
+
+    # MATERIAIS DE SAÍDA
+    elementos.append(Paragraph("Materiais de saída", estilo_titulo))
+
+    linhas_saida = []
+    linhas_retorno = []
+
+    for item in movimentacao.itens:
+        retirado = Decimal(item.quantidade or 0)
+
+        totais = db.session.query(
+            func.coalesce(
+                func.sum(MovimentacaoItem.quantidade_retorno), 0
+            ),
+            func.coalesce(
+                func.sum(MovimentacaoItem.quantidade_consumida), 0
+            )
+        ).filter(
+            MovimentacaoItem.movimentacao_item_origem_id == item.id
+        ).first()
+
+        retornado = Decimal(totais[0] or 0)
+
+        linhas_saida.append([
+            item.material.codigo,
+            item.material.nome,
+            item.material.unidade,
+            f"{retirado:.3f}"
+        ])
+
+        if retornado > 0:
+            linhas_retorno.append([
+                item.material.codigo,
+                item.material.nome,
+                item.material.unidade,
+                f"{retornado:.3f}"
+            ])
+
+    if not linhas_saida:
+        linhas_saida.append(["-", "Nenhum material", "-", "-"])
+
+    elementos.append(criar_tabela(
+        ["Código", "Material", "Unidade", "Retirado"],
+        linhas_saida,
+        [3.5 * cm, 9 * cm, 2.5 * cm, 3 * cm]
+    ))
+
+    # HISTÓRICO
+    elementos.append(Paragraph(
+        "Histórico de retornos e consumos",
+        estilo_titulo
+    ))
+
+    vinculadas = Movimentacao.query.filter(
+        Movimentacao.movimentacao_origem_id == movimentacao.id,
+        Movimentacao.tipo.in_(["RETORNO", "CONSUMO"])
+    ).order_by(
+        Movimentacao.data_movimentacao.asc(),
+        Movimentacao.id.asc()
+    ).all()
+
+    linhas_historico = []
+
+    for vinculada in vinculadas:
+        for item in vinculada.itens:
+            quantidade = (
+                item.quantidade_retorno
+                if vinculada.tipo == "RETORNO"
+                else item.quantidade_consumida
+            )
+
+            linhas_historico.append([
+                vinculada.numero_os or f"#{vinculada.id}",
+                vinculada.data_movimentacao.strftime(
+                    "%d/%m/%Y %H:%M"
+                ),
+                vinculada.tipo,
+                item.material.nome,
+                f"{Decimal(quantidade or 0):.3f}",
+                item.material.unidade
+            ])
+
+    if not linhas_historico:
+        linhas_historico.append([
+            "-", "-", "-", "Nenhuma movimentação", "-", "-"
+        ])
+
+    elementos.append(criar_tabela(
+        ["OS vinculada", "Data", "Tipo",
+         "Material", "Quantidade", "Un."],
+        linhas_historico,
+        [3 * cm, 3.4 * cm, 2.1 * cm,
+         5.2 * cm, 2.8 * cm, 1.5 * cm]
+    ))
+
+    # MATERIAIS EFETIVAMENTE RETORNADOS
+    elementos.append(Paragraph(
+        "Materiais retornados ao almoxarifado",
+        estilo_titulo
+    ))
+
+    if not linhas_retorno:
+        linhas_retorno.append([
+            "-", "Nenhum material retornado", "-", "-"
+        ])
+
+    elementos.append(criar_tabela(
+        ["Código", "Material", "Unidade", "Retornado"],
+        linhas_retorno,
+        [3.5 * cm, 9 * cm, 2.5 * cm, 3 * cm]
+    ))
+
+    # ASSINATURAS
+    # Duas linhas independentes, com espaço entre elas
+    estilo_assinatura = ParagraphStyle(
+        "AssinaturaCentralizada",
+        parent=estilo_texto,
+        alignment=TA_CENTER
+    )   
+
+    assinatura_saida = Paragraph(
+        "Responsável pela saída do material",
+        estilo_assinatura
+    )
+
+    assinatura_retorno = Paragraph(
+        "Responsável pelo retorno do material",
+        estilo_assinatura
+    )
+
+    tabela_assinaturas = Table(
+        [[assinatura_saida, "", assinatura_retorno]],
+        colWidths=[8 * cm, 2 * cm, 8 * cm],
+        hAlign="CENTER"
+    )
+
+    tabela_assinaturas.setStyle(TableStyle([
+        ("LINEABOVE", (0, 0), (0, 0), 0.7, colors.black),
+        ("LINEABOVE", (2, 0), (2, 0), 0.7, colors.black),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+        ("TOPPADDING", (0, 0), (-1, -1), 10),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER")
+    ]))
+
+    elementos.append(
+        KeepTogether([
+            Spacer(1, 1 * cm),
+            tabela_assinaturas
+        ])
+    )
+
+    # RODAPÉ
+    def rodape(canvas, doc):
+        canvas.saveState()
+        largura, _ = A4
+
+        canvas.setFont("Helvetica", 8)
+        canvas.setFillColor(colors.grey)
+
+        canvas.drawString(
+            1.5 * cm,
+            1 * cm,
+            "CATENA ENGENHARIA | Controle de Almoxarifado"
+        )
+
+        canvas.drawRightString(
+            largura - 1.5 * cm,
+            1 * cm,
+            f"Página {doc.page}"
+        )
+
+        canvas.restoreState()
+
+    documento.build(
+        elementos,
+        onFirstPage=rodape,
+        onLaterPages=rodape
+    )
+
+    buffer.seek(0)
+
+    nome_arquivo = (
+        f"OS_{movimentacao.numero_os or movimentacao.id}"
+        .replace("/", "-")
+        + ".pdf"
+    )
+
+    return send_file(
+        buffer,
+        mimetype="application/pdf",
+        as_attachment=False,
+        download_name=nome_arquivo
+    )
     
