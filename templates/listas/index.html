@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div style="padding: 30px;">
+
+    <h1>📋 Listas de Materiais</h1>
+
+    <p>
+        Gerenciamento de listas reutilizáveis
+        de materiais da Catena Engenharia.
+    </p>
+
+    {% if listas %}
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Descrição</th>
+                    <th>Situação</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for lista in listas %}
+                <tr>
+                    <td>{{ lista.nome }}</td>
+                    <td>{{ lista.descricao or "-" }}</td>
+                    <td>
+                        {{ "Ativa" if lista.ativo else "Inativa" }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    {% else %}
+
+        <p>Nenhuma lista cadastrada até o momento.</p>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

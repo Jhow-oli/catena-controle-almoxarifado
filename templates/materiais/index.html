@@ -50,7 +50,7 @@
                     📋 Movimentação de material 
                 </a> 
                 
-                <a href="#"> 
+                <a href="{{ url_for('listas.index') }}">> 
                     📋 Listas 
                 </a> 
                 
@@ -194,6 +194,7 @@
                             <th>Estoque mínimo</th>
                             <th>Estoque</th>
                             <th>Localização</th>
+                            <th>Calibração</th>
                             <th>Status</th>
                             <th>Ações</th>
 
@@ -263,6 +264,57 @@
                                 {{ material.localizacao or "-" }}
                             </td>
 
+                            <td class="calibracao-coluna">
+
+                                {% if not material.requer_calibracao %}
+
+                                    <span class="calibracao-badge calibracao-na">
+                                        Não aplicável
+                                    </span>
+
+                                {% elif not material.validade_calibracao %}
+
+                                    <span class="calibracao-badge calibracao-bloqueada">
+                                        ⛔ Calibração pendente
+                                    </span>
+
+                                {% elif material.validade_calibracao < hoje %}
+
+                                    <span class="calibracao-badge calibracao-bloqueada">
+                                        ⛔ Calibração vencida
+                                    </span>
+
+                                    <small class="calibracao-data">
+                                        Venceu em:
+                                        {{ material.validade_calibracao.strftime('%d/%m/%Y') }}
+                                    </small>
+
+                                {% elif material.validade_calibracao <= limite_calibracao %}
+
+                                    <span class="calibracao-badge calibracao-proxima">
+                                        ⚠️ Próxima do vencimento
+                                    </span>
+
+                                    <small class="calibracao-data">
+                                        Vence em:
+                                        {{ material.validade_calibracao.strftime('%d/%m/%Y') }}
+                                    </small>
+
+                                {% else %}
+
+                                    <span class="calibracao-badge calibracao-regular">
+                                        ✓ Calibração regular
+                                    </span>
+
+                                    <small class="calibracao-data">
+                                        Válida até:
+                                        {{ material.validade_calibracao.strftime('%d/%m/%Y') }}
+                                    </small>
+
+                                {% endif %}
+
+                            </td>
+
                             <td>
 
                                 {% if material.ativo %}
@@ -305,6 +357,24 @@
                                     🖨️ Etiqueta
                                 </a>
 
+                                <a
+                                    href="{{ url_for('materiais.editar', id=material.id) }}"
+                                    class="button-small"
+                                    title="Editar material"
+                                >
+                                    ✏️ Editar
+                                </a>
+
+                                <a
+                                    href="{{ url_for('materiais.visualizar', codigo=material.codigo) }}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="button-small"
+                                    title="Visualizar informações e histórico de calibrações"
+                                >
+                                    Visualizar
+                                </a>
+
                                 {% if material.ativo %}
 
                                     <form
@@ -339,7 +409,7 @@
                         <tr>
 
                             <td
-                                colspan="9"
+                                colspan="10"
                                 style="text-align:center;"
                             >
                                 Nenhum material cadastrado.
@@ -360,5 +430,79 @@
     </main>
 
 </div>
+
+<style>
+/* PADRONIZAÇÃO DOS BOTÕES DE AÇÃO */
+
+.table-container .button-small {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+
+    padding: 5px 10px;
+    min-height: 30px;
+
+    background: #e5e7eb;
+    color: #1f2937;
+
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+
+    transition: background 0.2s ease;
+}
+
+.table-container .button-small:hover {
+    background: #cbd5e1;
+}
+
+/* SITUAÇÃO DA CALIBRAÇÃO */
+
+.calibracao-coluna {
+    min-width: 190px;
+}
+
+.calibracao-badge {
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.calibracao-na {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.calibracao-regular {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.calibracao-proxima {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.calibracao-bloqueada {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.calibracao-data {
+    display: block;
+    margin-top: 6px;
+    color: #64748b;
+    font-size: 11px;
+}
+
+</style>
 
 {% endblock %}

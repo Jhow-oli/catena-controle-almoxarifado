@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="login-container">
+
+    <div class="form-card material-view-card">
+
+        <h1>Registrar nova calibração</h1>
+
+        <p>
+            <strong>Equipamento:</strong> {{ material.nome }}
+        </p>
+
+        <p>
+            <strong>Código:</strong> {{ material.codigo }}
+        </p>
+
+        <p>
+            <strong>Número de série:</strong>
+            {{ material.numero_serie or "-" }}
+        </p>
+
+        <hr>
+
+        <form method="POST">
+
+            <div class="form-group">
+                <label for="data_calibracao">
+                    Data da calibração *
+                </label>
+
+                <input
+                    type="date"
+                    id="data_calibracao"
+                    name="data_calibracao"
+                    value="{{ request.form.get('data_calibracao', '') }}"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="validade_calibracao">
+                    Validade da calibração *
+                </label>
+
+                <input
+                    type="date"
+                    id="validade_calibracao"
+                    name="validade_calibracao"
+                    value="{{ request.form.get('validade_calibracao', '') }}"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="numero_certificado">
+                    Número do certificado
+                </label>
+
+                <input
+                    type="text"
+                    id="numero_certificado"
+                    name="numero_certificado"
+                    maxlength="100"
+                    value="{{ request.form.get('numero_certificado', '') }}"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="laboratorio">
+                    Laboratório responsável
+                </label>
+
+                <input
+                    type="text"
+                    id="laboratorio"
+                    name="laboratorio"
+                    maxlength="150"
+                    value="{{ request.form.get('laboratorio', '') }}"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="observacoes">
+                    Observações técnicas
+                </label>
+
+                <textarea
+                    id="observacoes"
+                    name="observacoes"
+                    rows="4"
+                >{{ request.form.get('observacoes', '') }}</textarea>
+            </div>
+
+            <div class="form-actions">
+
+                <a
+                    href="{{ url_for('materiais.visualizar', codigo=material.codigo) }}"
+                    class="button-secondary"
+                >
+                    Cancelar
+                </a>
+
+                <button type="submit" class="button-primary">
+                    Registrar calibração
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

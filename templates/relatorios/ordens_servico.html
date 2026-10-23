@@ -43,7 +43,9 @@
                 📋 Movimentação de material
             </a>
 
-            <a href="#">📋 Listas</a>
+            <a href="{{ url_for('listas.index') }}">
+                📋 Listas
+            </a>
             <a href="#">📄 Notas Fiscais</a>
             <a href="#">🚛 Manifestos</a>
 
@@ -93,9 +95,9 @@
 
                 <a
                     href="{{ url_for('relatorios.index') }}"
-                    class="button-secondary"
+                    class="btn-voltar-relatorio"
                 >
-                    ← Voltar
+                    ← Voltar aos relatórios
                 </a>
 
             </div>
@@ -300,7 +302,7 @@
                 }
 
                 .os-botao-pesquisar {
-                    background: #2563eb;
+                    background: #1f4e79;
                     color: white;
                     border: none;
                 }
@@ -431,6 +433,22 @@
                     white-space: nowrap;
                 }
 
+                .btn-voltar-relatorio {
+                    display: inline-flex;
+                    align-items: center;
+                    padding: 10px 15px;
+                    background: #2563eb;
+                    color: #ffffff !important;
+                    border-radius: 6px;
+                    text-decoration: none !important;
+                    font-size: 13px;
+                    font-weight: 600;
+                }
+
+                .btn-voltar-relatorio:hover {
+                    background: #1d4ed8;
+                }
+
                 @media (max-width: 1100px) {
                     .os-filtros {
                         flex-wrap: wrap !important;
@@ -523,7 +541,7 @@
                     formaction="{{ url_for('relatorios.ordens_servico_pdf') }}"
                     formmethod="GET"
                 >
-                    📄 Exportar PDF
+                    Exportar relatório
                 </button>
 
             </form>

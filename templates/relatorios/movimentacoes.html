@@ -51,7 +51,7 @@
                     📋 Movimentação de material 
                 </a> 
                 
-                <a href="#"> 
+                <a href="{{ url_for('listas.index') }}"> 
                     📋 Listas 
                 </a> 
                 
@@ -109,9 +109,9 @@
 
                 <a
                     href="{{ url_for('relatorios.index') }}"
-                    class="botao-voltar-relatorio"
+                    class="btn-voltar-relatorio"
                 >
-                    ← Voltar
+                    ← Voltar aos relatórios
                 </a>
 
             </div>
@@ -259,7 +259,7 @@
                     formaction="{{ url_for('relatorios.movimentacoes_pdf') }}"
                     formmethod="GET"
                 >
-                    📄 Exportar PDF
+                    Exportar relatório
                 </button>
 
             </form>
@@ -589,6 +589,22 @@
             padding: 10px 16px;
             margin: 0;
             box-sizing: border-box;
+        }
+
+        .btn-voltar-relatorio {
+            display: inline-flex;
+            align-items: center;
+            padding: 10px 15px;
+            background: #2563eb;
+            color: #ffffff !important;
+            border-radius: 6px;
+            text-decoration: none !important;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .btn-voltar-relatorio:hover {
+            background: #1d4ed8;
         }
 
         /* TELAS MENORES */

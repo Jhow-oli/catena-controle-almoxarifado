@@ -51,7 +51,7 @@
                     📋 Movimentação de material 
                 </a> 
                 
-                <a href="#"> 
+                <a href="{{ url_for('listas.index') }}"> 
                     📋 Listas 
                 </a> 
                 
@@ -102,7 +102,8 @@
                     <h1>Relatórios</h1>
                     <p>
                         Consulte informações de estoque,
-                        movimentações e Ordens de Serviço.
+                        movimentações, Ordens de Serviço
+                        e calibrações de equipamentos.
                     </p>
                 </div>
             </div>
@@ -166,6 +167,45 @@
                                 </a>
                             </td>
                         </tr>
+
+                        <!-- RELATÓRIO DE CALIBRAÇÕES -->
+                        <tr>
+                            <td>Calibrações</td>
+
+                            <td>
+                                Controle de equipamentos sujeitos à calibração,
+                                validade dos certificados e histórico de calibrações.
+                            </td>
+
+                            <td>
+                                <a
+                                    href="{{ url_for('relatorios.calibracoes') }}"
+                                    class="btn-relatorio"
+                                >
+                                    🛠️ Relatório de calibrações
+                                </a>
+                            </td>
+
+                            <!-- RELATÓRIO GERENCIAL -->
+                            <tr>
+                                <td>Gerencial Consolidado</td>
+
+                                <td>
+                                    Visão geral do estoque, movimentações,
+                                    Ordens de Serviço e calibrações.
+                                </td>
+
+                                <td>
+                                    <a
+                                        href="{{ url_for('relatorios.gerencial') }}"
+                                        class="btn-relatorio"
+                                    >
+                                        📊 Relatório gerencial
+                                    </a>
+                                </td>
+                            </tr>
+                        </tr>
+
                     </tbody>
                 </table>
 

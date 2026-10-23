@@ -1,4 +1,11 @@
-from flask import Blueprint, render_template, request, send_file
+from flask import (
+    Blueprint,
+    render_template,
+    request,
+    flash,
+    redirect,
+    url_for
+)
 from flask_login import current_user
 
 # GERAÇÃO DE RELATÓRIOS PDF
@@ -1599,5 +1606,1042 @@ def ordens_servico_pdf():
         buffer,
         as_attachment=True,
         download_name="relatorio_ordens_servico_catena.pdf",
+        mimetype="application/pdf"
+    )
+
+# -------------------------------------------------
+# RELATÓRIO DE CALIBRAÇÕES
+# -------------------------------------------------
+
+@relatorios_bp.route("/calibracoes")
+@admin_required
+def calibracoes():
+
+    from datetime import date, timedelta
+
+    hoje = date.today()
+    limite_alerta = hoje + timedelta(days=30)
+
+    pesquisa = request.args.get("pesquisa", "").strip()
+    situacao_filtro = request.args.get(
+        "situacao", "TODAS"
+    ).strip().upper()
+
+    situacoes_permitidas = (
+        "TODAS", "REGULAR", "PROXIMA",
+        "VENCIDA", "PENDENTE"
+    )
+
+    if situacao_filtro not in situacoes_permitidas:
+        situacao_filtro = "TODAS"
+
+    materiais = (
+        Material.query
+        .filter_by(ativo=True, requer_calibracao=True)
+        .order_by(Material.nome.asc())
+        .all()
+    )
+
+    equipamentos = []
+
+    for material in materiais:
+
+        validade = material.validade_calibracao
+
+        if not material.data_ultima_calibracao or not validade:
+            situacao = "PENDENTE"
+
+        elif validade < hoje:
+            situacao = "VENCIDA"
+
+        elif validade <= limite_alerta:
+            situacao = "PROXIMA"
+
+        else:
+            situacao = "REGULAR"
+
+        # Pesquisa por nome, código ou número de série
+        if pesquisa:
+            termo = pesquisa.casefold()
+
+            campos = (
+                material.nome or "",
+                material.codigo or "",
+                material.numero_serie or ""
+            )
+
+            if not any(
+                termo in str(campo).casefold()
+                for campo in campos
+            ):
+                continue
+
+        # Filtro por situação
+        if (
+            situacao_filtro != "TODAS"
+            and situacao != situacao_filtro
+        ):
+            continue
+
+        equipamentos.append({
+            "material": material,
+            "situacao": situacao
+        })
+
+    total_equipamentos = len(equipamentos)
+
+    total_regulares = sum(
+        item["situacao"] == "REGULAR"
+        for item in equipamentos
+    )
+
+    total_proximos = sum(
+        item["situacao"] == "PROXIMA"
+        for item in equipamentos
+    )
+
+    total_vencidos = sum(
+        item["situacao"] == "VENCIDA"
+        for item in equipamentos
+    )
+
+    total_pendentes = sum(
+        item["situacao"] == "PENDENTE"
+        for item in equipamentos
+    )
+
+    return render_template(
+        "relatorios/calibracoes.html",
+        equipamentos=equipamentos,
+        pesquisa=pesquisa,
+        situacao_filtro=situacao_filtro,
+        total_equipamentos=total_equipamentos,
+        total_regulares=total_regulares,
+        total_proximos=total_proximos,
+        total_vencidos=total_vencidos,
+        total_pendentes=total_pendentes
+    )
+
+# -------------------------------------------------
+# EXPORTAÇÃO PDF — RELATÓRIO DE CALIBRAÇÕES
+# -------------------------------------------------
+
+@relatorios_bp.route("/calibracoes/pdf")
+@admin_required
+def calibracoes_pdf():
+
+    from datetime import date, timedelta
+    from xml.sax.saxutils import escape
+
+    hoje = date.today()
+    limite_alerta = hoje + timedelta(days=30)
+
+    pesquisa = request.args.get("pesquisa", "").strip()
+    situacao_filtro = request.args.get(
+        "situacao", "TODAS"
+    ).strip().upper()
+
+    situacoes_permitidas = (
+        "TODAS", "REGULAR", "PROXIMA",
+        "VENCIDA", "PENDENTE"
+    )
+
+    if situacao_filtro not in situacoes_permitidas:
+        situacao_filtro = "TODAS"
+
+    materiais = (
+        Material.query
+        .filter_by(
+            ativo=True,
+            requer_calibracao=True
+        )
+        .order_by(Material.nome.asc())
+        .all()
+    )
+
+    equipamentos = []
+
+    for material in materiais:
+
+        validade = material.validade_calibracao
+
+        if not material.data_ultima_calibracao or not validade:
+            situacao = "PENDENTE"
+        elif validade < hoje:
+            situacao = "VENCIDA"
+        elif validade <= limite_alerta:
+            situacao = "PROXIMA"
+        else:
+            situacao = "REGULAR"
+
+        if pesquisa:
+            termo = pesquisa.casefold()
+
+            campos = (
+                material.nome or "",
+                material.codigo or "",
+                material.numero_serie or ""
+            )
+
+            if not any(
+                termo in str(campo).casefold()
+                for campo in campos
+            ):
+                continue
+
+        if (
+            situacao_filtro != "TODAS"
+            and situacao != situacao_filtro
+        ):
+            continue
+
+        equipamentos.append((material, situacao))
+
+    # INDICADORES DOS EQUIPAMENTOS FILTRADOS
+
+    total = len(equipamentos)
+
+    regulares = sum(
+        situacao == "REGULAR"
+        for _, situacao in equipamentos
+    )
+
+    proximos = sum(
+        situacao == "PROXIMA"
+        for _, situacao in equipamentos
+    )
+
+    vencidos = sum(
+        situacao == "VENCIDA"
+        for _, situacao in equipamentos
+    )
+
+    pendentes = sum(
+        situacao == "PENDENTE"
+        for _, situacao in equipamentos
+    )
+
+    # PREPARAÇÃO DO PDF
+
+    buffer = BytesIO()
+
+    documento = SimpleDocTemplate(
+        buffer,
+        pagesize=landscape(A4),
+        rightMargin=1.5 * cm,
+        leftMargin=1.5 * cm,
+        topMargin=1.5 * cm,
+        bottomMargin=1.5 * cm
+    )
+
+    estilos = getSampleStyleSheet()
+    elementos = []
+
+    # LOGOTIPO CATENA
+
+    caminho_logo = os.path.join(
+        current_app.static_folder,
+        "img",
+        "Catena logo.jpg"
+    )
+
+    titulo_empresa = Paragraph(
+        "<b>CATENA ENGENHARIA</b>",
+        estilos["Title"]
+    )
+
+    if os.path.exists(caminho_logo):
+
+        logo = Image(
+            caminho_logo,
+            width=2.5 * cm,
+            height=2.5 * cm,
+            kind="proportional"
+        )
+
+        cabecalho = Table(
+            [[logo, titulo_empresa]],
+            colWidths=[3.5 * cm, 22 * cm]
+        )
+
+        cabecalho.setStyle(TableStyle([
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("LEFTPADDING", (0, 0), (-1, -1), 0)
+        ]))
+
+        elementos.append(cabecalho)
+
+    else:
+        elementos.append(titulo_empresa)
+
+    elementos.append(
+        Paragraph(
+            "Relatório de Calibrações",
+            estilos["Heading2"]
+        )
+    )
+
+    data_emissao = datetime.now(
+        ZoneInfo("America/Sao_Paulo")
+    ).strftime("%d/%m/%Y %H:%M")
+
+    nome_emissor = (
+        getattr(current_user, "nome", None)
+        or getattr(current_user, "usuario", None)
+        or "Não identificado"
+    )
+
+    elementos.append(
+        Paragraph(
+            f"Emitido em: {data_emissao}",
+            estilos["Normal"]
+        )
+    )
+
+    elementos.append(
+        Paragraph(
+            f"Emitido por: {escape(str(nome_emissor))}",
+            estilos["Normal"]
+        )
+    )
+
+    elementos.append(Spacer(1, 0.4 * cm))
+
+    # FILTROS UTILIZADOS
+
+    filtros = []
+
+    if pesquisa:
+        filtros.append(f"Pesquisa: {pesquisa}")
+
+    nomes_situacao = {
+        "REGULAR": "Regular",
+        "PROXIMA": "Próxima do vencimento",
+        "VENCIDA": "Vencida",
+        "PENDENTE": "Pendente"
+    }
+
+    if situacao_filtro != "TODAS":
+        filtros.append(
+            "Situação: " + nomes_situacao[situacao_filtro]
+        )
+
+    texto_filtros = (
+        " | ".join(escape(f) for f in filtros)
+        if filtros
+        else "Nenhum filtro aplicado"
+    )
+
+    elementos.append(
+        Paragraph(
+            f"<b>Filtros utilizados:</b> {texto_filtros}",
+            estilos["Normal"]
+        )
+    )
+
+    elementos.append(Spacer(1, 0.4 * cm))
+
+    # INDICADORES
+
+    dados_indicadores = [
+        [
+            "Equipamentos",
+            "Regulares",
+            "Próximas",
+            "Vencidas",
+            "Pendentes"
+        ],
+        [
+            str(total),
+            str(regulares),
+            str(proximos),
+            str(vencidos),
+            str(pendentes)
+        ]
+    ]
+
+    tabela_indicadores = Table(
+        dados_indicadores,
+        colWidths=[5.1 * cm] * 5,
+        hAlign="LEFT"
+    )
+
+    tabela_indicadores.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0),
+         colors.HexColor("#1f4e79")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTNAME", (0, 0), (-1, -1), "Helvetica-Bold"),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("BACKGROUND", (0, 1), (-1, 1),
+         colors.HexColor("#f2f5f8")),
+        ("GRID", (0, 0), (-1, -1), 0.4, colors.lightgrey),
+        ("TOPPADDING", (0, 0), (-1, -1), 9),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 9)
+    ]))
+
+    elementos.append(tabela_indicadores)
+    elementos.append(Spacer(1, 0.5 * cm))
+
+    # TABELA DE EQUIPAMENTOS
+
+    estilo_celula = estilos["Normal"].clone(
+        "CelulaRelatorioCalibracao"
+    )
+    estilo_celula.fontSize = 7
+    estilo_celula.leading = 9
+
+    dados = [[
+        "Código",
+        "Equipamento",
+        "Nº de Série",
+        "Última Calib.",
+        "Validade",
+        "Certificado",
+        "Situação"
+    ]]
+
+    for material, situacao in equipamentos:
+
+        ultima = (
+            material.data_ultima_calibracao.strftime("%d/%m/%Y")
+            if material.data_ultima_calibracao
+            else "-"
+        )
+
+        validade = (
+            material.validade_calibracao.strftime("%d/%m/%Y")
+            if material.validade_calibracao
+            else "-"
+        )
+
+        valores = [
+            material.codigo or "-",
+            material.nome or "-",
+            material.numero_serie or "-",
+            ultima,
+            validade,
+            material.numero_certificado or "-",
+            nomes_situacao.get(situacao, situacao)
+        ]
+
+        dados.append([
+            Paragraph(escape(str(valor)), estilo_celula)
+            for valor in valores
+        ])
+
+    if not equipamentos:
+        dados.append([
+            Paragraph(
+                "Nenhum equipamento encontrado.",
+                estilo_celula
+            ),
+            "", "", "", "", "", ""
+        ])
+
+    tabela = Table(
+        dados,
+        colWidths=[
+            3.0 * cm,
+            5.0 * cm,
+            3.5 * cm,
+            3.0 * cm,
+            3.0 * cm,
+            3.5 * cm,
+            4.5 * cm
+        ],
+        repeatRows=1,
+        hAlign="LEFT"
+    )
+
+    tabela.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0),
+         colors.HexColor("#1f4e79")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, 0), 8),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("GRID", (0, 0), (-1, -1), 0.3, colors.lightgrey),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [
+            colors.white,
+            colors.HexColor("#f2f5f8")
+        ]),
+        ("TOPPADDING", (0, 0), (-1, -1), 7),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 7)
+    ]))
+
+    elementos.append(tabela)
+
+    # RODAPÉ
+
+    def adicionar_rodape(canvas, doc):
+        canvas.saveState()
+
+        largura, _ = doc.pagesize
+
+        canvas.setFont("Helvetica", 8)
+        canvas.setFillColor(colors.grey)
+
+        canvas.drawString(
+            1.5 * cm,
+            1 * cm,
+            "CATENA ENGENHARIA | Controle de Almoxarifado"
+        )
+
+        canvas.drawRightString(
+            largura - 1.5 * cm,
+            1 * cm,
+            f"Página {doc.page}"
+        )
+
+        canvas.restoreState()
+
+    documento.build(
+        elementos,
+        onFirstPage=adicionar_rodape,
+        onLaterPages=adicionar_rodape
+    )
+
+    buffer.seek(0)
+
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name="relatorio_calibracoes_catena.pdf",
+        mimetype="application/pdf"
+    )
+
+# -------------------------------------------------
+# RELATÓRIO GERENCIAL CONSOLIDADO
+# -------------------------------------------------
+
+@relatorios_bp.route("/gerencial")
+@admin_required
+def gerencial():
+
+    from datetime import date, timedelta
+
+    hoje = date.today()
+    limite_alerta = hoje + timedelta(days=30)
+
+    # MATERIAIS ATIVOS
+    materiais = Material.query.filter_by(
+        ativo=True
+    ).all()
+
+    total_materiais = len(materiais)
+
+    estoque_baixo = sum(
+        1 for material in materiais
+        if material.estoque_minimo is not None
+        and material.quantidade <= material.estoque_minimo
+    )
+
+    # ---------------------------------------------
+    # FILTRO POR PERÍODO
+    # ---------------------------------------------
+
+    from datetime import datetime, time
+
+    data_inicio_str = request.args.get(
+        "data_inicio", ""
+    ).strip()
+
+    data_fim_str = request.args.get(
+        "data_fim", ""
+    ).strip()
+
+    data_inicio = None
+    data_fim = None
+    erro_periodo = None
+
+    try:
+        if data_inicio_str:
+            data_inicio = date.fromisoformat(data_inicio_str)
+
+        if data_fim_str:
+            data_fim = date.fromisoformat(data_fim_str)
+
+        if data_inicio and data_fim and data_inicio > data_fim:
+            erro_periodo = (
+                "A data inicial não pode ser posterior "
+                "à data final."
+            )
+
+    except ValueError:
+        erro_periodo = "Informe datas válidas."
+
+    if erro_periodo:
+        flash(erro_periodo, "warning")
+
+        return redirect(
+            url_for("relatorios.gerencial")
+        )
+
+    # ---------------------------------------------
+    # MOVIMENTAÇÕES DO PERÍODO
+    # ---------------------------------------------
+
+    consulta = Movimentacao.query
+
+    if data_inicio:
+        consulta = consulta.filter(
+            Movimentacao.data_movimentacao >=
+            datetime.combine(data_inicio, time.min)
+        )
+
+    if data_fim:
+        consulta = consulta.filter(
+            Movimentacao.data_movimentacao <
+            datetime.combine(
+                data_fim + timedelta(days=1),
+                time.min
+            )
+        )
+
+    movimentacoes = consulta.all()
+
+    total_movimentacoes = len(movimentacoes)
+
+    total_entradas = sum(
+        mov.tipo == "ENTRADA"
+        for mov in movimentacoes
+    )
+
+    total_saidas = sum(
+        mov.tipo == "SAIDA"
+        for mov in movimentacoes
+    )
+
+    total_retornos = sum(
+        mov.tipo == "RETORNO"
+        for mov in movimentacoes
+    )
+
+    total_consumos = sum(
+        mov.tipo == "CONSUMO"
+        for mov in movimentacoes
+    )
+
+    # ORDENS DE SERVIÇO
+    ordens = [
+        mov for mov in movimentacoes
+        if mov.tipo == "SAIDA"
+        and mov.numero_os is not None
+    ]
+
+    total_os = len(ordens)
+
+    os_abertas = sum(
+        ordem.status == "ABERTA"
+        for ordem in ordens
+    )
+
+    os_encerradas = sum(
+        ordem.status == "ENCERRADA"
+        for ordem in ordens
+    )
+
+    # CALIBRAÇÕES
+    equipamentos = [
+        material for material in materiais
+        if material.requer_calibracao
+    ]
+
+    total_equipamentos = len(equipamentos)
+
+    calibracoes_regulares = 0
+    calibracoes_proximas = 0
+    calibracoes_vencidas = 0
+    calibracoes_pendentes = 0
+
+    for material in equipamentos:
+
+        validade = material.validade_calibracao
+
+        if not material.data_ultima_calibracao or not validade:
+            calibracoes_pendentes += 1
+
+        elif validade < hoje:
+            calibracoes_vencidas += 1
+
+        elif validade <= limite_alerta:
+            calibracoes_proximas += 1
+
+        else:
+            calibracoes_regulares += 1
+
+    return render_template(
+        "relatorios/gerencial.html",
+        data_inicio_str=data_inicio_str,
+        data_fim_str=data_fim_str,
+        total_materiais=total_materiais,
+        estoque_baixo=estoque_baixo,
+        total_movimentacoes=total_movimentacoes,
+        total_entradas=total_entradas,
+        total_saidas=total_saidas,
+        total_retornos=total_retornos,
+        total_consumos=total_consumos,
+        total_os=total_os,
+        os_abertas=os_abertas,
+        os_encerradas=os_encerradas,
+        total_equipamentos=total_equipamentos,
+        calibracoes_regulares=calibracoes_regulares,
+        calibracoes_proximas=calibracoes_proximas,
+        calibracoes_vencidas=calibracoes_vencidas,
+        calibracoes_pendentes=calibracoes_pendentes
+    )
+
+# -------------------------------------------------
+# EXPORTAÇÃO PDF — RELATÓRIO GERENCIAL CONSOLIDADO
+# -------------------------------------------------
+
+@relatorios_bp.route("/gerencial/pdf")
+@admin_required
+def gerencial_pdf():
+
+    from datetime import date, time, timedelta
+    from xml.sax.saxutils import escape
+
+    hoje = date.today()
+    limite_alerta = hoje + timedelta(days=30)
+
+    # FILTRO POR PERÍODO
+    data_inicio_str = request.args.get(
+        "data_inicio", ""
+    ).strip()
+
+    data_fim_str = request.args.get(
+        "data_fim", ""
+    ).strip()
+
+    try:
+        data_inicio = (
+            date.fromisoformat(data_inicio_str)
+            if data_inicio_str else None
+        )
+
+        data_fim = (
+            date.fromisoformat(data_fim_str)
+            if data_fim_str else None
+        )
+
+        if (
+            data_inicio and data_fim
+            and data_inicio > data_fim
+        ):
+            raise ValueError("Período invertido")
+
+    except ValueError:
+        flash("Informe um período válido.", "warning")
+        return redirect(url_for("relatorios.gerencial"))
+
+    # MATERIAIS E ESTOQUE — SITUAÇÃO ATUAL
+    materiais = Material.query.filter_by(ativo=True).all()
+
+    total_materiais = len(materiais)
+
+    estoque_baixo = sum(
+        1 for material in materiais
+        if material.estoque_minimo is not None
+        and material.quantidade <= material.estoque_minimo
+    )
+
+    # MOVIMENTAÇÕES DO PERÍODO
+    consulta = Movimentacao.query
+
+    if data_inicio:
+        consulta = consulta.filter(
+            Movimentacao.data_movimentacao >=
+            datetime.combine(data_inicio, time.min)
+        )
+
+    if data_fim:
+        consulta = consulta.filter(
+            Movimentacao.data_movimentacao <
+            datetime.combine(
+                data_fim + timedelta(days=1),
+                time.min
+            )
+        )
+
+    movimentacoes = consulta.all()
+
+    total_movimentacoes = len(movimentacoes)
+    total_entradas = sum(m.tipo == "ENTRADA" for m in movimentacoes)
+    total_saidas = sum(m.tipo == "SAIDA" for m in movimentacoes)
+    total_retornos = sum(m.tipo == "RETORNO" for m in movimentacoes)
+    total_consumos = sum(m.tipo == "CONSUMO" for m in movimentacoes)
+
+    # ORDENS DE SERVIÇO
+    ordens = [
+        m for m in movimentacoes
+        if m.tipo == "SAIDA"
+        and m.numero_os is not None
+    ]
+
+    total_os = len(ordens)
+    os_abertas = sum(o.status == "ABERTA" for o in ordens)
+    os_encerradas = sum(o.status == "ENCERRADA" for o in ordens)
+
+    # CALIBRAÇÕES — SITUAÇÃO ATUAL
+    equipamentos = [
+        m for m in materiais
+        if m.requer_calibracao
+    ]
+
+    total_equipamentos = len(equipamentos)
+    calibracoes_regulares = 0
+    calibracoes_proximas = 0
+    calibracoes_vencidas = 0
+    calibracoes_pendentes = 0
+
+    for material in equipamentos:
+        validade = material.validade_calibracao
+
+        if not material.data_ultima_calibracao or not validade:
+            calibracoes_pendentes += 1
+        elif validade < hoje:
+            calibracoes_vencidas += 1
+        elif validade <= limite_alerta:
+            calibracoes_proximas += 1
+        else:
+            calibracoes_regulares += 1
+
+    # DOCUMENTO PDF
+    buffer = BytesIO()
+
+    documento = SimpleDocTemplate(
+        buffer,
+        pagesize=landscape(A4),
+        rightMargin=1.5 * cm,
+        leftMargin=1.5 * cm,
+        topMargin=1.5 * cm,
+        bottomMargin=1.5 * cm
+    )
+
+    estilos = getSampleStyleSheet()
+    elementos = []
+
+    caminho_logo = os.path.join(
+        current_app.static_folder,
+        "img",
+        "Catena logo.jpg"
+    )
+
+    titulo_empresa = Paragraph(
+        "<b>CATENA ENGENHARIA</b>",
+        estilos["Title"]
+    )
+
+    if os.path.exists(caminho_logo):
+        logo = Image(
+            caminho_logo,
+            width=2.5 * cm,
+            height=2.5 * cm,
+            kind="proportional"
+        )
+
+        cabecalho = Table(
+            [[logo, titulo_empresa]],
+            colWidths=[3.5 * cm, 22 * cm]
+        )
+
+        cabecalho.setStyle(TableStyle([
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("LEFTPADDING", (0, 0), (-1, -1), 0)
+        ]))
+
+        elementos.append(cabecalho)
+    else:
+        elementos.append(titulo_empresa)
+
+    elementos.append(Paragraph(
+        "Relatório Gerencial Consolidado",
+        estilos["Heading2"]
+    ))
+
+    emissao = datetime.now(
+        ZoneInfo("America/Sao_Paulo")
+    ).strftime("%d/%m/%Y %H:%M")
+
+    emissor = (
+        getattr(current_user, "nome", None)
+        or getattr(current_user, "usuario", None)
+        or "Não identificado"
+    )
+
+    elementos.append(Paragraph(
+        f"Emitido em: {emissao}",
+        estilos["Normal"]
+    ))
+
+    elementos.append(Paragraph(
+        f"Emitido por: {escape(str(emissor))}",
+        estilos["Normal"]
+    ))
+
+    inicio_formatado = (
+        data_inicio.strftime("%d/%m/%Y")
+        if data_inicio else "Sem limite"
+    )
+
+    fim_formatado = (
+        data_fim.strftime("%d/%m/%Y")
+        if data_fim else "Sem limite"
+    )
+
+    elementos.append(Spacer(1, 0.3 * cm))
+
+    elementos.append(Paragraph(
+        f"<b>Período:</b> {inicio_formatado} "
+        f"até {fim_formatado}",
+        estilos["Normal"]
+    ))
+
+    elementos.append(Paragraph(
+        "O período aplica-se às movimentações e Ordens "
+        "de Serviço. Estoque e calibrações representam "
+        "a situação atual.",
+        estilos["Normal"]
+    ))
+
+    elementos.append(Spacer(1, 0.5 * cm))
+
+    # FUNÇÃO AUXILIAR PARA TABELAS DE INDICADORES
+    def adicionar_indicadores(titulo, nomes, valores):
+
+        elementos.append(Paragraph(
+            escape(titulo),
+            estilos["Heading3"]
+        ))
+
+        largura_util = landscape(A4)[0] - 3 * cm
+        largura_coluna = largura_util / len(nomes)
+
+        tabela = Table(
+            [
+                [
+                    Paragraph(
+                        escape(str(nome)),
+                        estilos["Normal"]
+                    )
+                    for nome in nomes
+                ],
+                [str(valor) for valor in valores]
+            ],
+            colWidths=[largura_coluna] * len(nomes),
+            hAlign="LEFT"
+        )
+
+        tabela.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0),
+             colors.HexColor("#1f4e79")),
+            ("TEXTCOLOR", (0, 0), (-1, 0),
+             colors.white),
+            ("FONTNAME", (0, 0), (-1, 0),
+             "Helvetica-Bold"),
+            ("FONTNAME", (0, 1), (-1, 1),
+             "Helvetica-Bold"),
+            ("FONTSIZE", (0, 1), (-1, 1), 14),
+            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("BACKGROUND", (0, 1), (-1, 1),
+             colors.HexColor("#f2f5f8")),
+            ("GRID", (0, 0), (-1, -1),
+             0.4, colors.lightgrey),
+            ("TOPPADDING", (0, 0), (-1, -1), 10),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 10)
+        ]))
+
+        # Cabeçalho branco sobre fundo azul
+        tabela._cellvalues[0] = [
+            Paragraph(
+                f'<font color="white"><b>{escape(str(nome))}</b></font>',
+                estilos["Normal"]
+            )
+            for nome in nomes
+        ]
+
+        elementos.append(tabela)
+        elementos.append(Spacer(1, 0.4 * cm))
+
+    adicionar_indicadores(
+        "Materiais e Estoque",
+        ["Materiais ativos", "Estoque baixo"],
+        [total_materiais, estoque_baixo]
+    )
+
+    adicionar_indicadores(
+        "Movimentações de Materiais",
+        ["Total", "Entradas", "Saídas", "Retornos", "Consumos"],
+        [
+            total_movimentacoes,
+            total_entradas,
+            total_saidas,
+            total_retornos,
+            total_consumos
+        ]
+    )
+
+    adicionar_indicadores(
+        "Ordens de Serviço",
+        ["Total de OS", "OS abertas", "OS encerradas"],
+        [total_os, os_abertas, os_encerradas]
+    )
+
+    adicionar_indicadores(
+        "Controle de Calibrações",
+        [
+            "Equipamentos",
+            "Regulares",
+            "Próximas",
+            "Vencidas",
+            "Pendentes"
+        ],
+        [
+            total_equipamentos,
+            calibracoes_regulares,
+            calibracoes_proximas,
+            calibracoes_vencidas,
+            calibracoes_pendentes
+        ]
+    )
+
+    # RODAPÉ
+    def adicionar_rodape(canvas, doc):
+        canvas.saveState()
+
+        largura, _ = doc.pagesize
+
+        canvas.setFont("Helvetica", 8)
+        canvas.setFillColor(colors.grey)
+
+        canvas.drawString(
+            1.5 * cm,
+            1 * cm,
+            "CATENA ENGENHARIA | Controle de Almoxarifado"
+        )
+
+        canvas.drawRightString(
+            largura - 1.5 * cm,
+            1 * cm,
+            f"Página {doc.page}"
+        )
+
+        canvas.restoreState()
+
+    documento.build(
+        elementos,
+        onFirstPage=adicionar_rodape,
+        onLaterPages=adicionar_rodape
+    )
+
+    buffer.seek(0)
+
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name="relatorio_gerencial_catena.pdf",
         mimetype="application/pdf"
     )

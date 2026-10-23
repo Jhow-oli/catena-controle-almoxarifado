@@ -50,8 +50,8 @@
                     📋 Movimentação de material 
                 </a> 
                 
-                <a href="#"> 
-                    📋 Listas 
+                <a href="{{ url_for('listas.index') }}">
+                    📋 Listas
                 </a> 
                 
                 <a href="#"> 
@@ -248,6 +248,139 @@
 
                         </div>
 
+                        <div class="form-group">
+                            <label for="numero_serie">
+                                Número de série
+                            </label>
+
+                            <input
+                                type="text"
+                                id="numero_serie"
+                                name="numero_serie"
+                                maxlength="100"
+                                placeholder="Ex.: FLK-117-000125"
+                                value="{{ material.numero_serie or '' if material else '' }}"
+                            >
+
+                            <small>
+                                Preencha para equipamentos identificados individualmente.
+                            </small>
+                        </div>
+
+                        <div class="form-group form-full calibracao-section">
+
+                            <div class="calibracao-header">
+                                <div>
+                                    <h3>Controle de calibração</h3>
+                                    <p>
+                                        Habilite esta opção apenas para instrumentos
+                                        e equipamentos que necessitam de calibração periódica.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <label class="calibracao-checkbox">
+                                <input
+                                    type="checkbox"
+                                    id="requer_calibracao"
+                                    name="requer_calibracao"
+                                    value="1"
+                                    {% if material and material.requer_calibracao %}
+                                        checked
+                                    {% endif %}
+                                >
+
+                                <span>
+                                    Este equipamento necessita de calibração periódica
+                                </span>
+                            </label>
+
+                            <div id="campos-calibracao" class="calibracao-campos">
+
+                                <div class="form-group">
+                                    <label for="data_ultima_calibracao">
+                                        Data da última calibração
+                                    </label>
+
+                                    <input
+                                        type="date"
+                                        id="data_ultima_calibracao"
+                                        name="data_ultima_calibracao"
+                                        value="{{ material.data_ultima_calibracao.isoformat() if material and material.data_ultima_calibracao else '' }}"
+                                    >
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="validade_calibracao">
+                                        Validade da calibração *
+                                    </label>
+
+                                    <input
+                                        type="date"
+                                        id="validade_calibracao"
+                                        name="validade_calibracao"
+                                        value="{{ material.validade_calibracao.isoformat() if material and material.validade_calibracao else '' }}"
+                                    >
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="numero_certificado">
+                                        Número do certificado
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="numero_certificado"
+                                        name="numero_certificado"
+                                        maxlength="100"
+                                        placeholder="Ex.: CAL-2026-001"
+                                        value="{{ material.numero_certificado or '' if material else '' }}"
+                                    >
+                                </div>
+
+                                <!-- LABORATÓRIO RESPONSÁVEL -->
+                                <div class="form-group campo-calibracao">
+
+                                    <label for="laboratorio">
+                                        Laboratório responsável
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="laboratorio"
+                                        name="laboratorio"
+                                        maxlength="150"
+                                        placeholder="Nome do laboratório"
+                                        value="{{ request.form.get('laboratorio', '') }}"
+                                    >
+
+                                </div>
+
+                                <!-- OBSERVAÇÕES TÉCNICAS -->
+                                <div class="form-group campo-calibracao observacoes-calibracao">
+
+                                    <label for="observacoes_calibracao">
+                                        Observações técnicas da calibração
+                                    </label>
+
+                                    <textarea
+                                        id="observacoes_calibracao"
+                                        name="observacoes_calibracao"
+                                        rows="3"
+                                        placeholder="Informações sobre a calibração realizada"
+                                    >{{ request.form.get('observacoes_calibracao', '') }}</textarea>
+
+                                </div>
+
+                                <div class="calibracao-aviso">
+                                    Equipamentos com calibração vencida ou sem
+                                    validade cadastrada serão bloqueados para novas saídas.
+                                </div>
+
+                            </div>
+
+                        </div>
+
                     </div>
 
 
@@ -278,5 +411,113 @@
     </main>
 
 </div>
+
+<style>
+.calibracao-section {
+    margin-top: 18px;
+    padding: 24px;
+    background: #f8fafc;
+    border: 1px solid #dbe4ee;
+    border-radius: 12px;
+}
+
+.calibracao-header h3 {
+    margin: 0 0 6px;
+    font-size: 17px;
+    color: #1e293b;
+}
+
+.calibracao-header p {
+    margin: 0 0 18px;
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.5;
+}
+
+.calibracao-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    background: #ffffff;
+    border: 1px solid #dbe4ee;
+    border-radius: 9px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: #334155;
+}
+
+.calibracao-checkbox input {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    accent-color: #2563eb;
+}
+
+.calibracao-campos {
+    display: none;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    margin-top: 20px;
+}
+
+.calibracao-aviso {
+    grid-column: 1 / -1;
+    padding: 13px 16px;
+    border-radius: 8px;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    color: #9a3412;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.observacoes-calibracao {
+    grid-column: 1 / -1;
+}
+
+.observacoes-calibracao textarea {
+    width: 100%;
+    min-height: 90px;
+    box-sizing: border-box;
+}
+
+@media (max-width: 700px) {
+    .calibracao-section {
+        padding: 16px;
+    }
+
+    .calibracao-campos {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const checkbox = document.getElementById("requer_calibracao");
+    const campos = document.getElementById("campos-calibracao");
+    const validade = document.getElementById("validade_calibracao");
+
+    function atualizarCalibracao() {
+        const habilitado = checkbox.checked;
+
+        campos.style.display = habilitado ? "grid" : "none";
+
+        campos.querySelectorAll("input, textarea").forEach(function (campo) {
+            campo.disabled = !habilitado;
+        });
+
+        validade.required = habilitado;
+    }
+
+    checkbox.addEventListener("change", atualizarCalibracao);
+
+    atualizarCalibracao();
+
+});
+</script>
 
 {% endblock %}

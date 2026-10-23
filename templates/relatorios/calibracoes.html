@@ -1,0 +1,555 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="layout">
+
+    <!-- MENU LATERAL -->
+    <aside class="sidebar">
+
+        <div class="sidebar-logo">
+            <img
+                src="{{ url_for('static', filename='img/Catena logo.jpg') }}"
+                alt="Catena Engenharia"
+            >
+        </div>
+
+        <header class="sidebar-logo">
+            <div>CATENA ENGENHARIA</div>
+        </header>
+
+        <nav>
+            <a href="{{ url_for('dashboard.index') }}">
+                🏠 Início
+            </a>
+
+            <a href="{{ url_for('materiais.index') }}">
+                📦 Materiais
+            </a>
+
+            <a href="{{ url_for('veiculos.index') }}">
+                🚚 Veículos
+            </a>
+
+            <a href="{{ url_for('colaboradores.index') }}">
+                👷 Colaboradores
+            </a>
+
+            <a href="{{ url_for('usuarios.index') }}">
+                👤 Usuários
+            </a>
+
+            <a href="{{ url_for('movimentacoes.index') }}">
+                📋 Movimentação de material
+            </a>
+
+            <a href="{{ url_for('listas.index') }}">
+                📋 Listas
+            </a>
+            <a href="#">📄 Notas Fiscais</a>
+            <a href="#">🚛 Manifestos</a>
+
+            <a href="{{ url_for('relatorios.index') }}">
+                📊 Relatórios
+            </a>
+
+            <a href="#">⚙️ Configurações</a>
+        </nav>
+
+    </aside>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="main-content">
+
+        <header class="topbar">
+
+            <div>
+                <strong>Controle de Almoxarifado</strong>
+            </div>
+
+            <div class="user-area">
+                <span>👤 {{ current_user.nome }}</span>
+
+                <a
+                    href="{{ url_for('auth.logout') }}"
+                    class="logout-button"
+                >
+                    Sair
+                </a>
+            </div>
+
+        </header>
+
+        <section class="dashboard">
+
+            <div class="page-header">
+                <div>
+                    <h1>Relatório de Calibrações</h1>
+                    <p>
+                        Controle de calibrações dos equipamentos
+                        da Catena Engenharia.
+                    </p>
+                </div>
+
+                <a
+                    href="{{ url_for('relatorios.index') }}"
+                    class="btn-voltar-relatorio"
+                >
+                    ← Voltar aos relatórios
+                </a>
+            </div>
+
+            <!-- FILTROS DO RELATÓRIO -->
+            <form
+                method="GET"
+                action="{{ url_for('relatorios.calibracoes') }}"
+                class="filtros-calibracao"
+            >
+
+                <div class="filtro-campo">
+                    <label for="pesquisa">Pesquisar equipamento</label>
+
+                    <input
+                        type="text"
+                        id="pesquisa"
+                        name="pesquisa"
+                        value="{{ pesquisa }}"
+                        placeholder="Nome, código ou número de série"
+                    >
+                </div>
+
+                <div class="filtro-campo">
+                    <label for="situacao">Situação</label>
+
+                    <select id="situacao" name="situacao">
+                        <option value="TODAS"
+                            {% if situacao_filtro == "TODAS" %}selected{% endif %}>
+                            Todas
+                        </option>
+
+                        <option value="REGULAR"
+                            {% if situacao_filtro == "REGULAR" %}selected{% endif %}>
+                            Regular
+                        </option>
+
+                        <option value="PROXIMA"
+                            {% if situacao_filtro == "PROXIMA" %}selected{% endif %}>
+                            Próxima do vencimento
+                        </option>
+
+                        <option value="VENCIDA"
+                            {% if situacao_filtro == "VENCIDA" %}selected{% endif %}>
+                            Vencida
+                        </option>
+
+                        <option value="PENDENTE"
+                            {% if situacao_filtro == "PENDENTE" %}selected{% endif %}>
+                            Pendente
+                        </option>
+                    </select>
+                </div>
+
+                <div class="acoes-filtros">
+                    <button type="submit" class="btn-acao-filtrar">
+                        🔎 Filtrar
+                    </button>
+
+                    <a
+                        href="{{ url_for('relatorios.calibracoes') }}"
+                        class="btn-acao-limpar"
+                    >
+                        Limpar
+                    </a>
+
+                    <a
+                        href="{{ url_for(
+                            'relatorios.calibracoes_pdf',
+                            pesquisa=pesquisa,
+                            situacao=situacao_filtro
+                        ) }}"
+                        class="btn-acao-exportar"
+                    >
+                        📄 Exportar relatório
+                    </a>
+                </div>
+
+            <!-- INDICADORES DE CALIBRAÇÃO -->
+            <div class="calibracao-indicadores">
+
+                <div class="calibracao-card">
+                    <h3>Equipamentos</h3>
+                    <strong>{{ total_equipamentos }}</strong>
+                </div>
+
+                <div class="calibracao-card regular">
+                    <h3>Regulares</h3>
+                    <strong>{{ total_regulares }}</strong>
+                </div>
+
+                <div class="calibracao-card proxima">
+                    <h3>Próximas do vencimento</h3>
+                    <strong>{{ total_proximos }}</strong>
+                </div>
+
+                <div class="calibracao-card vencida">
+                    <h3>Vencidas</h3>
+                    <strong>{{ total_vencidos }}</strong>
+                </div>
+
+                <div class="calibracao-card pendente">
+                    <h3>Pendentes</h3>
+                    <strong>{{ total_pendentes }}</strong>
+                </div>
+
+            </div>
+
+            <div class="table-container">
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Equipamento</th>
+                            <th>Número de Série</th>
+                            <th>Validade</th>
+                            <th>Situação</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for item in equipamentos %}
+
+                        {% set material = item.material %}
+
+                        <tr>
+                            <td>{{ material.codigo }}</td>
+
+                            <td>{{ material.nome }}</td>
+
+                            <td>{{ material.numero_serie or "-" }}</td>
+
+                            <td>
+                                {% if material.validade_calibracao %}
+                                    {{ material.validade_calibracao.strftime("%d/%m/%Y") }}
+                                {% else %}
+                                    Não informada
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if item.situacao == "REGULAR" %}
+                                    <span class="status-calibracao status-regular">
+                                        Regular
+                                    </span>
+
+                                {% elif item.situacao == "PROXIMA" %}
+                                    <span class="status-calibracao status-proxima">
+                                        Próxima do vencimento
+                                    </span>
+
+                                {% elif item.situacao == "VENCIDA" %}
+                                    <span class="status-calibracao status-vencida">
+                                        Vencida
+                                    </span>
+
+                                {% else %}
+                                    <span class="status-calibracao status-pendente">
+                                        Pendente
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+
+                        {% else %}
+                        <tr>
+                            <td colspan="5">
+                                Nenhum equipamento encontrado.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+</div>
+
+<style>
+.calibracao-indicadores {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.calibracao-card {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+.calibracao-card h3 {
+    font-size: 13px;
+    color: #6b7280;
+    margin: 0 0 12px;
+}
+
+.calibracao-card strong {
+    font-size: 28px;
+    color: #1f2937;
+}
+
+.calibracao-card.regular strong {
+    color: #15803d;
+}
+
+.calibracao-card.proxima strong {
+    color: #b45309;
+}
+
+.calibracao-card.vencida strong,
+.calibracao-card.pendente strong {
+    color: #b91c1c;
+}
+
+.status-calibracao {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status-regular {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-proxima {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-vencida,
+.status-pendente {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.btn-voltar-relatorio {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 15px;
+    background: #2563eb;
+    color: #ffffff !important;
+    border-radius: 6px;
+    text-decoration: none !important;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.btn-voltar-relatorio:hover {
+    background: #1d4ed8;
+}
+
+/* FILTROS DO RELATÓRIO DE CALIBRAÇÕES */
+
+.filtros-calibracao {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.filtro-campo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 220px;
+    flex: 1;
+}
+
+.filtro-campo label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.filtro-campo input,
+.filtro-campo select {
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: white;
+    font-size: 13px;
+}
+
+.btn-filtrar-calibracao,
+.btn-limpar-calibracao {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    padding: 0 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none !important;
+}
+
+.btn-filtrar-calibracao {
+    border: none;
+    background: #1f4e79;
+    color: white;
+}
+
+.btn-limpar-calibracao {
+    background: #e5e7eb;
+    color: #374151 !important;
+}
+
+.btn-filtrar-calibracao:hover {
+    background: #1d4ed8;
+}
+
+.btn-limpar-calibracao:hover {
+    background: #d1d5db;
+}
+
+.acoes-relatorio-calibracao {
+    display: flex;
+    justify-content: flex-end;
+    margin: 10px 0 20px;
+}
+
+.btn-pdf-calibracao {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 11px 18px;
+    border-radius: 6px;
+    background: #b91c1c;
+    color: #ffffff !important;
+    text-decoration: none !important;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.btn-pdf-calibracao:hover {
+    background: #991b1b;
+}
+
+/* ALINHAMENTO PADRÃO DOS FILTROS CATENA */
+
+.filtros-calibracao,
+.filtros-gerencial {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px;
+    width: 100%;
+    margin: 20px 0 12px;
+}
+
+/* CAMPOS DE PESQUISA */
+
+.filtros-calibracao .filtro-campo,
+.filtros-gerencial .filtro-gerencial-campo {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 220px;
+    min-width: 180px;
+    gap: 6px;
+}
+
+.filtros-calibracao .filtro-campo input,
+.filtros-calibracao .filtro-campo select,
+.filtros-gerencial .filtro-gerencial-campo input {
+    display: block;
+    width: 100%;
+    height: 40px;
+    box-sizing: border-box;
+}
+
+/* GRUPO DE BOTÕES */
+
+.acoes-filtros {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+    gap: 10px;
+}
+
+.btn-acao-filtrar,
+.btn-acao-limpar,
+.btn-acao-exportar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: auto;
+    height: 40px;
+    box-sizing: border-box;
+    padding: 0 15px;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    text-decoration: none !important;
+    cursor: pointer;
+}
+
+.btn-acao-filtrar {
+    background: #1f4e79;
+    color: #ffffff;
+}
+
+.btn-acao-filtrar:hover {
+    background: #163a5b;
+}
+
+.btn-acao-limpar {
+    background: #e5e7eb;
+    color: #374151 !important;
+}
+
+.btn-acao-limpar:hover {
+    background: #d1d5db;
+}
+
+.btn-acao-exportar {
+    background: #c81919;
+    color: #ffffff !important;
+}
+
+.btn-acao-exportar:hover {
+    background: #a91515;
+}
+
+@media (max-width: 1050px) {
+    .acoes-filtros {
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 1100px) {
+    .calibracao-indicadores {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .calibracao-indicadores {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+{% endblock %}

@@ -1,0 +1,324 @@
+routes/dashboard.py:1: trailing whitespace.
+[32m+[m[32mfrom flask import Blueprint, render_template[m[41m [m
+routes/dashboard.py:2: trailing whitespace.
+[32m+[m[32mfrom flask_login import login_required[m[41m [m
+routes/dashboard.py:4: trailing whitespace.
+[32m+[m[32mfrom database.models import Material, Movimentacao[m[41m [m
+routes/dashboard.py:5: trailing whitespace.
+[32m+[m[32mfrom utils.decorators import admin_required[m[41m [m
+routes/dashboard.py:7: trailing whitespace.
+[32m+[m[32mdashboard_bp = Blueprint([m[41m [m
+routes/dashboard.py:8: trailing whitespace.
+[32m+[m[32m    "dashboard",[m[41m [m
+routes/dashboard.py:9: trailing whitespace.
+[32m+[m[32m    __name__,[m[41m [m
+routes/dashboard.py:10: trailing whitespace.
+[32m+[m[32m    url_prefix="/dashboard"[m[41m [m
+routes/dashboard.py:11: trailing whitespace.
+[32m+[m[32m)[m[41m [m
+routes/dashboard.py:14: trailing whitespace.
+[32m+[m[32m@dashboard_bp.route("/")[m[41m [m
+routes/dashboard.py:15: trailing whitespace.
+[32m+[m[32m@login_required[m[41m [m
+routes/dashboard.py:16: trailing whitespace.
+[32m+[m[32mdef index():[m[41m [m
+routes/dashboard.py:17: trailing whitespace.
+[32m+[m[32m    # Total de materiais cadastrados e ativos[m[41m [m
+routes/dashboard.py:18: trailing whitespace.
+[32m+[m[32m    total_materiais = Material.query.filter_by([m[41m [m
+routes/dashboard.py:19: trailing whitespace.
+[32m+[m[32m        ativo=True[m[41m [m
+routes/dashboard.py:20: trailing whitespace.
+[32m+[m[32m    ).count()[m[41m [m
+routes/dashboard.py:21: trailing whitespace.
+[32m+[m[41m    [m
+routes/dashboard.py:22: trailing whitespace.
+[32m+[m[32m    # Total de movimentações do tipo RETORNO[m[41m [m
+routes/dashboard.py:24: trailing whitespace.
+[32m+[m[32m        tipo="RETORNO"[m[41m [m
+routes/dashboard.py:25: trailing whitespace.
+[32m+[m[32m    ).count()[m[41m [m
+routes/dashboard.py:26: trailing whitespace.
+[32m+[m[41m    [m
+routes/dashboard.py:27: trailing whitespace.
+[32m+[m[32m    # Total de movimentações do tipo SAIDA[m[41m [m
+routes/dashboard.py:28: trailing whitespace.
+[32m+[m[32m    total_saidas = Movimentacao.query.filter_by([m[41m [m
+routes/dashboard.py:29: trailing whitespace.
+[32m+[m[32m        tipo="SAIDA"[m[41m [m
+routes/dashboard.py:30: trailing whitespace.
+[32m+[m[32m    ).count()[m[41m [m
+routes/dashboard.py:32: trailing whitespace.
+[32m+[m[32m    # Saídas que ainda estão abertas[m[41m [m
+routes/dashboard.py:33: trailing whitespace.
+[32m+[m[32m    em_movimentacao = Movimentacao.query.filter_by([m[41m [m
+routes/dashboard.py:34: trailing whitespace.
+[32m+[m[32m        tipo="SAIDA",[m[41m [m
+routes/dashboard.py:35: trailing whitespace.
+[32m+[m[32m        status="ABERTA"[m[41m [m
+routes/dashboard.py:36: trailing whitespace.
+[32m+[m[32m    ).count()[m[41m [m
+routes/dashboard.py:37: trailing whitespace.
+[32m+[m[41m    [m
+routes/dashboard.py:38: trailing whitespace.
+[32m+[m[32m    return render_template([m[41m [m
+routes/dashboard.py:39: trailing whitespace.
+[32m+[m[32m        "dashboard.html",[m[41m [m
+routes/dashboard.py:40: trailing whitespace.
+[32m+[m[32m        total_materiais=total_materiais,[m[41m [m
+routes/dashboard.py:41: trailing whitespace.
+[32m+[m[32m        total_retornos=total_retornos,[m[41m [m
+routes/dashboard.py:42: trailing whitespace.
+[32m+[m[32m        total_saidas=total_saidas,[m[41m [m
+routes/dashboard.py:43: trailing whitespace.
+[32m+[m[32m        em_movimentacao=em_movimentacao[m[41m [m
+routes/dashboard.py:44: trailing whitespace.
+[32m+[m[32m    )[m[41m [m
+routes/dashboard.py:47: trailing whitespace.
+[32m+[m[32m@dashboard_bp.route("/teste-admin")[m[41m [m
+routes/dashboard.py:48: trailing whitespace.
+[32m+[m[32m@admin_required[m[41m [m
+routes/dashboard.py:49: trailing whitespace.
+[32m+[m[32mdef teste_admin():[m[41m [m
+routes/dashboard.py:50: trailing whitespace.
+[32m+[m[41m    [m
+routes/dashboard.py:51: trailing whitespace.
+[32m+[m[32m        return """[m[41m [m
+routes/dashboard.py:52: trailing whitespace.
+[32m+[m[32m            <h1>Área administrativa</h1>[m[41m [m
+routes/dashboard.py:53: trailing whitespace.
+[32m+[m[32m            <p>Se você está vendo esta página, a proteção ADMIN funcionou.</p>[m[41m [m
+routes/movimentacoes.py:891: trailing whitespace.
+[32m+[m[41m                [m
+routes/movimentacoes.py:1159: trailing whitespace.
+[32m+[m[41m                    [m
+routes/movimentacoes.py:1493: trailing whitespace.
+[32m+[m[41m        [m
+routes/movimentacoes.py:1495: trailing whitespace.
+[32m+[m[41m        [m
+routes/movimentacoes.py:1497: trailing whitespace.
+[32m+[m[41m        [m
+routes/movimentacoes.py:1518: trailing whitespace.
+[32m+[m[41m    [m
+routes/movimentacoes.py:1517: new blank line at EOF.
+routes/relatorios.py:814: trailing whitespace.
+[32m+[m[41m    [m
+routes/relatorios.py:816: trailing whitespace.
+[32m+[m[41m    [m
+routes/relatorios.py:819: trailing whitespace.
+[32m+[m[41m    [m
+routes/relatorios.py:822: trailing whitespace.
+[32m+[m[41m    [m
+routes/relatorios.py:1312: trailing whitespace.
+[32m+[m[41m    [m
+routes/relatorios.py:1314: trailing whitespace.
+[32m+[m[41m    [m
+routes/relatorios.py:1317: trailing whitespace.
+[32m+[m[41m    [m
+routes/relatorios.py:1320: trailing whitespace.
+[32m+[m[41m    [m
+static/css/style.css:135: trailing whitespace.
+[32m+[m[32m/* ========================= LOGO DA CATENA[m[41m [m
+static/css/style.css:136: trailing whitespace.
+[32m+[m[32m========================= */[m[41m [m
+static/css/style.css:137: trailing whitespace.
+[32m+[m[32m.sidebar-logo {[m[41m [m
+static/css/style.css:138: trailing whitespace.
+[32m+[m[32m    width: 100%;[m[41m [m
+static/css/style.css:141: trailing whitespace.
+[32m+[m[32m    display: flex;[m[41m [m
+static/css/style.css:142: trailing whitespace.
+[32m+[m[32m    align-items: center;[m[41m [m
+static/css/style.css:143: trailing whitespace.
+[32m+[m[32m    justify-content: center;[m[41m [m
+static/css/style.css:145: trailing whitespace.
+[32m+[m[32m    background: transparent;[m[41m [m
+static/css/style.css:147: trailing whitespace.
+[32m+[m[32m    margin-bottom: 6px;[m[41m [m
+static/css/style.css:148: trailing whitespace.
+[32m+[m[32m    padding: 5px;[m[41m [m
+static/css/style.css:149: trailing whitespace.
+[32m+[m[32m}[m[41m [m
+static/css/style.css:150: trailing whitespace.
+[32m+[m[41m    [m
+static/css/style.css:151: trailing whitespace.
+[32m+[m[32m.sidebar-logo img {[m[41m [m
+static/css/style.css:152: trailing whitespace.
+[32m+[m[32m    max-width: 200px;[m[41m [m
+static/css/style.css:153: trailing whitespace.
+[32m+[m[32m    max-height: 100px;[m[41m [m
+static/css/style.css:155: trailing whitespace.
+[32m+[m[32m    width: auto;[m[41m [m
+static/css/style.css:156: trailing whitespace.
+[32m+[m[32m    height: auto;[m[41m [m
+static/css/style.css:157: trailing whitespace.
+[32m+[m[32m    object-fit: contain;[m[41m [m
+static/css/style.css:158: trailing whitespace.
+[32m+[m[32m    display: block;[m[41m [m
+static/css/style.css:159: trailing whitespace.
+[32m+[m[32m}[m[41m [m
+static/css/style.css:161: trailing whitespace.
+[32m+[m[32m/* Nome do sistema abaixo da logo */[m[41m [m
+static/css/style.css:163: trailing whitespace.
+[32m+[m[32m.sidebar-title {[m[41m [m
+static/css/style.css:164: trailing whitespace.
+[32m+[m[32m    text-align: center;[m[41m [m
+static/css/style.css:167: trailing whitespace.
+[32m+[m[32m    font-size: 25px;[m[41m [m
+static/css/style.css:169: trailing whitespace.
+[32m+[m[41m     [m
+static/css/style.css:170: trailing whitespace.
+[32m+[m[32m    margin-bottom: 20px;[m[41m [m
+templates/colaboradores/form.html:8: trailing whitespace.
+[32m+[m[32m    <aside class="sidebar">[m[41m [m
+templates/colaboradores/form.html:9: trailing whitespace.
+[32m+[m[41m        [m
+templates/colaboradores/form.html:10: trailing whitespace.
+[32m+[m[32m        <!-- LOGO CATENA -->[m[41m [m
+templates/colaboradores/form.html:12: trailing whitespace.
+[32m+[m[32m         <div class="sidebar-logo">[m[41m [m
+templates/colaboradores/form.html:13: trailing whitespace.
+[32m+[m[32m            <img[m[41m [m
+templates/colaboradores/form.html:15: trailing whitespace.
+[32m+[m[32m                alt="Catena Engenharia"[m[41m [m
+templates/colaboradores/form.html:16: trailing whitespace.
+[32m+[m[32m                >[m[41m [m
+templates/colaboradores/form.html:17: trailing whitespace.
+[32m+[m[32m            </div>[m[41m [m
+templates/colaboradores/form.html:18: trailing whitespace.
+[32m+[m[41m            [m
+templates/colaboradores/form.html:19: trailing whitespace.
+[32m+[m[32m            <!-- NOME DO EMPRESA -->[m[41m [m
+templates/colaboradores/form.html:20: trailing whitespace.
+[32m+[m[41m             [m
+templates/colaboradores/form.html:21: trailing whitespace.
+[32m+[m[32m            <header class="sidebar-logo">[m[41m [m
+templates/colaboradores/form.html:22: trailing whitespace.
+[32m+[m[41m                [m
+templates/colaboradores/form.html:23: trailing whitespace.
+[32m+[m[32m                <div>[m[41m [m
+templates/colaboradores/form.html:24: trailing whitespace.
+[32m+[m[32m                    CATENA ENGENHARIA[m[41m [m
+templates/colaboradores/form.html:26: trailing whitespace.
+[32m+[m[32m            </header>[m[41m [m
+templates/colaboradores/form.html:27: trailing whitespace.
+[32m+[m[41m            [m
+templates/colaboradores/form.html:28: trailing whitespace.
+[32m+[m[32m            <nav>[m[41m [m
+templates/colaboradores/form.html:29: trailing whitespace.
+[32m+[m[41m                [m
+templates/colaboradores/form.html:30: trailing whitespace.
+[32m+[m[32m                <a href="{{ url_for('dashboard.index') }}">[m[41m [m
+templates/colaboradores/form.html:31: trailing whitespace.
+[32m+[m[32m                    🏠 Início[m[41m [m
+templates/colaboradores/form.html:32: trailing whitespace.
+[32m+[m[32m                </a>[m[41m [m
+templates/colaboradores/form.html:33: trailing whitespace.
+[32m+[m[41m                [m
+templates/colaboradores/form.html:34: trailing whitespace.
+[32m+[m[32m                <a href="{{ url_for('materiais.index') }}">[m[41m [m
+templates/colaboradores/form.html:36: trailing whitespace.
+[32m+[m[32m                </a>[m[41m [m
+templates/colaboradores/form.html:37: trailing whitespace.
+[32m+[m[41m                [m
+templates/colaboradores/form.html:38: trailing whitespace.
+[32m+[m[32m                <a href="{{ url_for('veiculos.index') }}">[m[41m [m
+templates/colaboradores/form.html:39: trailing whitespace.
+[32m+[m[32m                    🚚 Veículos[m[41m [m
+templates/colaboradores/form.html:40: trailing whitespace.
+[32m+[m[32m                </a>[m[41m [m
+templates/colaboradores/form.html:41: trailing whitespace.
+[32m+[m[41m                [m
+templates/colaboradores/form.html:42: trailing whitespace.
+[32m+[m[32m                <a href="{{ url_for('colaboradores.index') }}">[m[41m [m
+templates/colaboradores/form.html:43: trailing whitespace.
+[32m+[m[32m                    👷 Colaboradores[m[41m [m
+templates/colaboradores/form.html:44: trailing whitespace.
+[32m+[m[32m                </a>[m[41m [m
+templates/colaboradores/form.html:45: trailing whitespace.
+[32m+[m[41m                [m
+templates/colaboradores/form.html:46: trailing whitespace.
+[32m+[m[32m                <a href="{{ url_for('usuarios.index') }}">[m[41m [m
+templates/colaboradores/form.html:47: trailing whitespace.
+[32m+[m[32m                    👤 Usuários[m[41m [m
+templates/colaboradores/form.html:48: trailing whitespace.
+[32m+[m[32m                </a>[m[41m [m
+templates/colaboradores/form.html:49: trailing whitespace.
+[32m+[m[41m                [m
+templates/colaboradores/form.html:50: trailing whitespace.
+[32m+[m[32m                <a href="{{ url_for('movimentacoes.index') }}">[m[41m [m
+templates/colaboradores/form.html:51: trailing whitespace.
+[32m+[m[32m                    📋 Movimentação de material[m[41m [m
+templates/colaboradores/form.html:52: trailing whitespace.
+[32m+[m[32m                </a>[m[41m [m
+templates/colaboradores/form.html:53: trailing whitespace.
+[32m+[m[41m                [m
+templates/colaboradores/form.html:54: trailing whitespace.
+[32m+[m[32m                <a href="#">[m[41m [m
+templates/colaboradores/form.html:55: trailing whitespace.
+[32m+[m[32m                    📋 Listas[m[41m [m
+templates/colaboradores/form.html:56: trailing whitespace.
+[32m+[m[32m                </a>[m[41m [m
+templates/colaboradores/form.html:57: trailing whitespace.
+[32m+[m[41m                [m
+templates/colaboradores/form.html:58: trailing whitespace.
+[32m+[m[32m                <a href="#">[m[41m [m
+templates/colaboradores/form.html:59: trailing whitespace.
+[32m+[m[32m                    📄 Notas Fiscais[m[41m [m
+templates/colaboradores/form.html:60: trailing whitespace.
+[32m+[m[32m                </a>[m[41m [m
+templates/colaboradores/form.html:62: trailing whitespace.
+[32m+[m[32m                <a href="#">[m[41m [m
+templates/colaboradores/form.html:63: trailing whitespace.
+[32m+[m[32m                    🚛 Manifestos[m[41m [m
+templates/colaboradores/form.html:64: trailing whitespace.
+[32m+[m[32m                </a>[m[41m [m
+templates/colaboradores/form.html:65: trailing whitespace.
+[32m+[m[41m                [m
+templates/colaboradores/form.html:67: trailing whitespace.
+[32m+[m[32m                    📊 Relatórios[m[41m [m
+templates/colaboradores/form.html:68: trailing whitespace.
+[32m+[m[32m                </a>[m[41m [m
+templates/colaboradores/form.html:69: trailing whitespace.
+[32m+[m[41m                [m
+templates/colaboradores/form.html:70: trailing whitespace.
+[32m+[m[32m                <a href="#">[m[41m [m
+templates/colaboradores/form.html:71: trailing whitespace.
+[32m+[m[32m                    ⚙️ Configurações[m[41m [m
+templates/colaboradores/form.html:72: trailing whitespace.
+[32m+[m[32m                </a>[m[41m [m
+templates/colaboradores/form.html:73: trailing whitespace.
+[32m+[m[32m            </nav>[m[41m [m
+templates/colaboradores/index.html:8: trailing whitespace.
+[32m+[m[32m    <aside class="sidebar">[m[41m [m
+templates/colaboradores/index.html:9: trailing whitespace.
+[32m+[m[41m        [m
+templates/colaboradores/index.html:10: trailing whitespace.
+[32m+[m[32m        <!-- LOGO CATENA -->[m[41m [m
+templates/colaboradores/index.html:12: trailing whitespace.
+[32m+[m[32m         <div class="sidebar-logo">[m[41m [m
+templates/colaboradores/index.html:13: trailing whitespace.
+[32m+[m[32m            <img[m[41m [m
+templates/colaboradores/index.html:15: trailing whitespace.
+[32m+[m[32m                alt="Catena Engenharia"[m[41m [m
+templates/colaboradores/index.html:16: trailing whitespace.
+[32m+[m[32m                >[m[41m [m
+templates/colaboradores/index.html:17: trailing whitespace.
+[32m+[m[32m            </div>[m[41m [m
+templates/colaboradores/index.html:18: trailing whitespace.
+[32m+[m[41m            [m
+templates/colaboradores/index.html:19: trailing whitespace.
+[32m+[m[32m            <!-- NOME DO EMPRESA -->[m[41m [m
+templates/colaboradores/index.html:20: trailing whitespace.
+[32m+[m[41m             [m
+templates/colaboradores/index.html:21: trailing whitespace.
+[32m+[m[32m            <header class="sidebar-logo">[m[41m [m
+templates/colaboradores/index.html:22: trailing whitespace.
+[32m+[m[41m                [m
+templates/colaboradores/index.html:23: trailing whitespace.
+[32m+[m[32m                <div>[m[41m [m
+templates/colaboradores/index.html:24: trailing whitespace.
+[32m+[m[32m                    CATENA ENGENHARIA[m[41m [m
+templates/colaboradores/index.html:26: trailing whitespace.
+[32m+[m[32m            </header>[m[41m [m
+templates/colaboradores/index.html:27: trailing white

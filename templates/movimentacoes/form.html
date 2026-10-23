@@ -51,7 +51,7 @@
                     📋 Movimentação de material 
                 </a> 
                 
-                <a href="#"> 
+                <a href="{{ url_for('listas.index') }}"> 
                     📋 Listas 
                 </a> 
                 
@@ -545,6 +545,35 @@ const tipoSelect = document.getElementById(
     "tipo"
 );
 
+function situacaoCalibracao(material) {
+    if (!material.requer_calibracao) {
+        return "NAO_APLICAVEL";
+    }
+
+    if (!material.validade_calibracao) {
+        return "BLOQUEADO";
+    }
+
+    const hoje = new Date();
+    const dataHoje = [
+        hoje.getFullYear(),
+        String(hoje.getMonth() + 1).padStart(2, "0"),
+        String(hoje.getDate()).padStart(2, "0")
+    ].join("-");
+
+    if (material.validade_calibracao < dataHoje) {
+        return "VENCIDA";
+    }
+
+    return "REGULAR";
+}
+
+function materialBloqueadoParaSaida(material) {
+    return tipoSelect.value === "SAIDA" &&
+        ["BLOQUEADO", "VENCIDA"].includes(
+            situacaoCalibracao(material)
+        );
+}
 
 const origemContainer = document.getElementById(
     "origem-container"
@@ -619,6 +648,44 @@ function ativarModoNormal() {
 
     materiaisBody.innerHTML = "";
 
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| VALIDAÇÃO DE CALIBRAÇÃO DOS MATERIAIS
+|--------------------------------------------------------------------------
+*/
+
+function validarCalibracoesSelecionadas() {
+
+    if (tipoSelect.value !== "SAIDA") {
+        return true;
+    }
+
+    const selecoes = materiaisBody.querySelectorAll(
+        'select[name="material_id[]"]'
+    );
+
+    for (const selecao of selecoes) {
+
+        const material = materiais.find(
+            item => String(item.id) === selecao.value
+        );
+
+        if (material && materialBloqueadoParaSaida(material)) {
+
+            alert(
+                `⛔ Não é possível registrar a saída de ` +
+                `"${material.nome}".\n` +
+                `A calibração está vencida ou pendente.`
+            );
+
+            return false;
+        }
+    }
+
+    return true;
 }
 
 
@@ -816,6 +883,19 @@ codigo = codigo.toLowerCase();
         return;
     }
 
+    if (materialBloqueadoParaSaida(material)) {
+
+        alert(
+            `⛔ SAÍDA BLOQUEADA\n\n` +
+            `Equipamento: ${material.nome}\n` +
+            `Código: ${material.codigo}\n\n` +
+            `A calibração está vencida ou sem validade cadastrada.\n` +
+            `Atualize a calibração antes de realizar a saída.`
+        );
+
+        return;
+    }
+
     const linhas = materiaisBody.querySelectorAll("tr");
 
     for (const linha of linhas) {
@@ -886,23 +966,26 @@ function adicionarMaterial() {
     `;
 
 
-    materiais.forEach(
-        function(material) {
+    materiais.forEach(function(material) {
 
-            opcoes += `
-                <option
-                    value="${material.id}"
-                >
-                    ${material.codigo}
-                    -
-                    ${material.nome}
-                    (${material.quantidade}
-                    ${material.unidade})
-                </option>
-            `;
+        const bloqueado = materialBloqueadoParaSaida(material);
 
-        }
-    );
+        const aviso = bloqueado
+            ? " - ⛔ CALIBRAÇÃO BLOQUEADA"
+            : "";
+
+        opcoes += `
+            <option
+                value="${material.id}"
+                ${bloqueado ? "disabled" : ""}
+            >
+                ${material.codigo} -
+                ${material.nome}
+                (${material.quantidade} ${material.unidade})
+                ${aviso}
+            </option>
+        `;
+    });
 
 
     linha.innerHTML = `
@@ -1147,6 +1230,11 @@ formularioMovimentacao.addEventListener(
     function(event) {
 
         if (envioEmAndamento) {
+            event.preventDefault();
+            return;
+        }
+
+        if (!validarCalibracoesSelecionadas()) {
             event.preventDefault();
             return;
         }

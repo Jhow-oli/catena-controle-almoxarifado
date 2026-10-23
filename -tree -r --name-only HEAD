@@ -1,0 +1,77 @@
+[35mHEAD:app.py[m[36m:[m[32m35[m[36m:[m            url_for("auth.esqueci_[1;31msenha[m"),
+[35mHEAD:config.py[m[36m:[m[32m9[m[36m:[m    [1;31mSECRET_KEY[m = os.environ["[1;31mSECRET_KEY[m"]
+[35mHEAD:config.py[m[36m:[m[32m13[m[36m:[m        f"{os.getenv('DB_USER')}:{os.getenv('[1;31mDB_PASSWORD[m')}"
+[35mHEAD:config.py[m[36m:[m[32m43[m[36m:[m    [1;31mMAIL_PASSWORD[m = os.getenv("[1;31mMAIL_PASSWORD[m")
+[35mHEAD:criar_admin.py[m[36m:[m[32m18[m[36m:[m        [1;31msenha[m = getpass("Digite a [1;31msenha[m do administrador: ")
+[35mHEAD:criar_admin.py[m[36m:[m[32m19[m[36m:[m        confirmar_[1;31msenha[m = getpass("Confirme a [1;31msenha[m: ")
+[35mHEAD:criar_admin.py[m[36m:[m[32m21[m[36m:[m        if not [1;31msenha[m or len([1;31msenha[m) < 12:
+[35mHEAD:criar_admin.py[m[36m:[m[32m23[m[36m:[m                "A [1;31msenha[m deve ter pelo menos 12 caracteres."
+[35mHEAD:criar_admin.py[m[36m:[m[32m26[m[36m:[m        if [1;31msenha[m != confirmar_[1;31msenha[m:
+[35mHEAD:criar_admin.py[m[36m:[m[32m28[m[36m:[m                "As [1;31msenha[ms informadas não coincidem."
+[35mHEAD:criar_admin.py[m[36m:[m[32m38[m[36m:[m        admin.definir_[1;31msenha[m([1;31msenha[m)
+[35mHEAD:database/models.py[m[36m:[m[32m7[m[36m:[mfrom werkzeug.security import generate_[1;31mpassword[m_hash
+[35mHEAD:database/models.py[m[36m:[m[32m50[m[36m:[m    [1;31msenha[m_hash = db.Column(
+[35mHEAD:database/models.py[m[36m:[m[32m77[m[36m:[m    def definir_[1;31msenha[m(self, [1;31msenha[m):
+[35mHEAD:database/models.py[m[36m:[m[32m79[m[36m:[m        self.[1;31msenha[m_hash = generate_[1;31mpassword[m_hash(
+[35mHEAD:database/models.py[m[36m:[m[32m80[m[36m:[m            [1;31msenha[m
+[35mHEAD:database/models.py[m[36m:[m[32m83[m[36m:[m    def verificar_[1;31msenha[m(self, [1;31msenha[m):
+[35mHEAD:database/models.py[m[36m:[m[32m85[m[36m:[m        from werkzeug.security import check_[1;31mpassword[m_hash
+[35mHEAD:database/models.py[m[36m:[m[32m87[m[36m:[m        return check_[1;31mpassword[m_hash(
+[35mHEAD:database/models.py[m[36m:[m[32m88[m[36m:[m            self.[1;31msenha[m_hash,
+[35mHEAD:database/models.py[m[36m:[m[32m89[m[36m:[m            [1;31msenha[m
+[35mHEAD:routes/auth.py[m[36m:[m[32m24[m[36m:[mfrom utils.[1;31mpassword[m_reset import gerar_[1;31mtoken[m_recuperacao
+[35mHEAD:routes/auth.py[m[36m:[m[32m53[m[36m:[m        [1;31msenha[m_digitada = request.form.get(
+[35mHEAD:routes/auth.py[m[36m:[m[32m54[m[36m:[m            "[1;31msenha[m",
+[35mHEAD:routes/auth.py[m[36m:[m[32m65[m[36m:[m            and usuario.verificar_[1;31msenha[m(
+[35mHEAD:routes/auth.py[m[36m:[m[32m66[m[36m:[m                [1;31msenha[m_digitada
+[35mHEAD:routes/auth.py[m[36m:[m[32m81[m[36m:[m            "Usuário ou [1;31msenha[m inválidos.",
+[35mHEAD:routes/auth.py[m[36m:[m[32m100[m[36m:[m@auth_bp.route("/esqueci-[1;31msenha[m", methods=["GET", "POST"])
+[35mHEAD:routes/auth.py[m[36m:[m[32m102[m[36m:[mdef esqueci_[1;31msenha[m():
+[35mHEAD:routes/auth.py[m[36m:[m[32m119[m[36m:[m            [1;31mtoken[m = gerar_[1;31mtoken[m_recuperacao(usuario)
+[35mHEAD:routes/auth.py[m[36m:[m[32m122[m[36m:[m                "auth.redefinir_[1;31msenha[m",
+[35mHEAD:routes/auth.py[m[36m:[m[32m123[m[36m:[m                [1;31mtoken[m=[1;31mtoken[m,
+[35mHEAD:routes/auth.py[m[36m:[m[32m127[m[36m:[m            assunto = "Recuperação de [1;31msenha[m - Catena Engenharia"
+[35mHEAD:routes/auth.py[m[36m:[m[32m132[m[36m:[mRecebemos uma solicitação para redefinir sua [1;31msenha[m
+[35mHEAD:routes/auth.py[m[36m:[m[32m164[m[36m:[m            "para recuperar sua [1;31msenha[m.",
+[35mHEAD:routes/auth.py[m[36m:[m[32m169[m[36m:[m            url_for("auth.esqueci_[1;31msenha[m")
+[35mHEAD:routes/auth.py[m[36m:[m[32m173[m[36m:[m        "esqueci_[1;31msenha[m.html"
+[35mHEAD:routes/auth.py[m[36m:[m[32m177[m[36m:[m    "/redefinir-[1;31msenha[m/<[1;31mtoken[m>",
+[35mHEAD:routes/auth.py[m[36m:[m[32m180[m[36m:[mdef redefinir_[1;31msenha[m([1;31mtoken[m):
+[35mHEAD:routes/auth.py[m[36m:[m[32m182[m[36m:[m    from utils.[1;31mpassword[m_reset import validar_[1;31mtoken[m_recuperacao
+[35mHEAD:routes/auth.py[m[36m:[m[32m184[m[36m:[m    usuario = validar_[1;31mtoken[m_recuperacao([1;31mtoken[m)
+[35mHEAD:routes/auth.py[m[36m:[m[32m195[m[36m:[m            url_for("auth.esqueci_[1;31msenha[m")
+[35mHEAD:routes/auth.py[m[36m:[m[32m201[m[36m:[m        [1;31msenha[m = request.form.get(
+[35mHEAD:routes/auth.py[m[36m:[m[32m202[m[36m:[m            "[1;31msenha[m",
+[35mHEAD:routes/auth.py[m[36m:[m[32m206[m[36m:[m        confirmar_[1;31msenha[m = request.form.get(
+[35mHEAD:routes/auth.py[m[36m:[m[32m207[m[36m:[m            "confirmar_[1;31msenha[m",
+[35mHEAD:routes/auth.py[m[36m:[m[32m211[m[36m:[m        if len([1;31msenha[m) < 12:
+[35mHEAD:routes/auth.py[m[36m:[m[32m214[m[36m:[m                "A nova [1;31msenha[m deve ter pelo menos 12 caracteres.",
+[35mHEAD:routes/auth.py[m[36m:[m[32m218[m[36m:[m        elif [1;31msenha[m != confirmar_[1;31msenha[m:
+[35mHEAD:routes/auth.py[m[36m:[m[32m221[m[36m:[m                "As [1;31msenha[ms informadas não coincidem.",
+[35mHEAD:routes/auth.py[m[36m:[m[32m227[m[36m:[m            usuario.definir_[1;31msenha[m([1;31msenha[m)
+[35mHEAD:routes/auth.py[m[36m:[m[32m232[m[36m:[m                "[1;31mSenha[m redefinida com sucesso! "
+[35mHEAD:routes/auth.py[m[36m:[m[32m233[m[36m:[m                "Faça login com sua nova [1;31msenha[m.",
+[35mHEAD:routes/auth.py[m[36m:[m[32m242[m[36m:[m        "redefinir_[1;31msenha[m.html",
+[35mHEAD:routes/auth.py[m[36m:[m[32m243[m[36m:[m        [1;31mtoken[m=[1;31mtoken[m
+[35mHEAD:routes/usuarios.py[m[36m:[m[32m93[m[36m:[m        [1;31msenha[m = request.form.get(
+[35mHEAD:routes/usuarios.py[m[36m:[m[32m94[m[36m:[m            "[1;31msenha[m",
+[35mHEAD:routes/usuarios.py[m[36m:[m[32m141[m[36m:[m        if not [1;31msenha[m:
+[35mHEAD:routes/usuarios.py[m[36m:[m[32m144[m[36m:[m                "Informe uma [1;31msenha[m.",
+[35mHEAD:routes/usuarios.py[m[36m:[m[32m229[m[36m:[m        novo_usuario.definir_[1;31msenha[m(
+[35mHEAD:routes/usuarios.py[m[36m:[m[32m230[m[36m:[m            [1;31msenha[m
+[35mHEAD:routes/usuarios.py[m[36m:[m[32m287[m[36m:[m        [1;31msenha[m = request.form.get(
+[35mHEAD:routes/usuarios.py[m[36m:[m[32m288[m[36m:[m            "[1;31msenha[m",
+[35mHEAD:routes/usuarios.py[m[36m:[m[32m408[m[36m:[m        # Só altera a [1;31msenha[m se o campo tiver sido preenchido
+[35mHEAD:routes/usuarios.py[m[36m:[m[32m409[m[36m:[m        if [1;31msenha[m:
+[35mHEAD:routes/usuarios.py[m[36m:[m[32m411[m[36m:[m            usuario.definir_[1;31msenha[m(
+[35mHEAD:routes/usuarios.py[m[36m:[m[32m412[m[36m:[m                [1;31msenha[m
+[35mHEAD:utils/email_service.py[m[36m:[m[32m38[m[36m:[m            config["[1;31mMAIL_PASSWORD[m"]
+[35mHEAD:utils/password_reset.py[m[36m:[m[32m16[m[36m:[m        current_app.config["[1;31mSECRET_KEY[m"],
+[35mHEAD:utils/password_reset.py[m[36m:[m[32m17[m[36m:[m        salt="catena-recuperacao-[1;31msenha[m-v1"
+[35mHEAD:utils/password_reset.py[m[36m:[m[32m21[m[36m:[mdef _assinatura_[1;31msenha[m(usuario):
+[35mHEAD:utils/password_reset.py[m[36m:[m[32m23[m[36m:[m        usuario.[1;31msenha[m_hash.encode("utf-8")
+[35mHEAD:utils/password_reset.py[m[36m:[m[32m27[m[36m:[mdef gerar_[1;31mtoken[m_recuperacao(usuario):
+[35mHEAD:utils/password_reset.py[m[36m:[m[32m30[m[36m:[m        "[1;31msenha[m": _assinatura_[1;31msenha[m(usuario)
+[35mHEAD:utils/password_reset.py[m[36m:[m[32m34[m[36m:[mdef validar_[1;31mtoken[m_recuperacao([1;31mtoken[m):
+[35mHEAD:utils/password_reset.py[m[36m:[m[32m39[m[36m:[m            [1;31mtoken[m,
+[35mHEAD:utils/password_reset.py[m[36m:[m[32m58[m[36m:[m    if dados.get("[1;31msenha[m") != _assinatura_[1;31msenha[m(usuario):

@@ -1,0 +1,612 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="layout">
+
+    <!-- MENU LATERAL -->
+    <aside class="sidebar">
+
+        <div class="sidebar-logo">
+            <img
+                src="{{ url_for('static', filename='img/Catena logo.jpg') }}"
+                alt="Catena Engenharia"
+            >
+        </div>
+
+        <header class="sidebar-logo">
+            <div>CATENA ENGENHARIA</div>
+        </header>
+
+        <nav>
+            <a href="{{ url_for('dashboard.index') }}">
+                🏠 Início
+            </a>
+
+            <a href="{{ url_for('materiais.index') }}">
+                📦 Materiais
+            </a>
+
+            <a href="{{ url_for('veiculos.index') }}">
+                🚚 Veículos
+            </a>
+
+            <a href="{{ url_for('colaboradores.index') }}">
+                👷 Colaboradores
+            </a>
+
+            <a href="{{ url_for('usuarios.index') }}">
+                👤 Usuários
+            </a>
+
+            <a href="{{ url_for('movimentacoes.index') }}">
+                📋 Movimentação de material
+            </a>
+
+            <a href="{{ url_for('listas.index') }}">
+                📋 Listas
+            </a>
+            <a href="#">📄 Notas Fiscais</a>
+            <a href="#">🚛 Manifestos</a>
+
+            <a href="{{ url_for('relatorios.index') }}">
+                📊 Relatórios
+            </a>
+
+            <a href="#">⚙️ Configurações</a>
+        </nav>
+
+    </aside>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="main-content">
+
+        <header class="topbar">
+
+            <div>
+                <strong>Controle de Almoxarifado</strong>
+            </div>
+
+            <div class="user-area">
+                <span>👤 {{ current_user.nome }}</span>
+
+                <a
+                    href="{{ url_for('auth.logout') }}"
+                    class="logout-button"
+                >
+                    Sair
+                </a>
+            </div>
+
+        </header>
+
+        <section class="dashboard">
+
+            <!-- CABEÇALHO -->
+            <div class="page-header">
+
+                <div>
+                    <h1>Relatório Gerencial Consolidado</h1>
+
+                    <p>
+                        Visão geral dos indicadores do almoxarifado
+                        da Catena Engenharia.
+                    </p>
+                </div>
+
+                <a
+                    href="{{ url_for('relatorios.index') }}"
+                    class="btn-voltar-gerencial"
+                >
+                    ← Voltar aos relatórios
+                </a>
+
+            </div>
+
+            <!-- FILTROS POR PERÍODO -->
+            <form
+                method="GET"
+                action="{{ url_for('relatorios.gerencial') }}"
+                class="filtros-gerencial"
+            >
+
+                <div class="filtro-gerencial-campo">
+                    <label for="data_inicio">Data inicial</label>
+
+                    <input
+                        type="date"
+                        id="data_inicio"
+                        name="data_inicio"
+                        value="{{ data_inicio_str }}"
+                    >
+                </div>
+
+                <div class="filtro-gerencial-campo">
+                    <label for="data_fim">Data final</label>
+
+                    <input
+                        type="date"
+                        id="data_fim"
+                        name="data_fim"
+                        value="{{ data_fim_str }}"
+                    >
+                </div>
+
+                <div class="acoes-filtros">
+                    <button type="submit" class="btn-acao-filtrar">
+                        🔎 Filtrar período
+                    </button>
+
+                    <a
+                        href="{{ url_for('relatorios.gerencial') }}"
+                        class="btn-acao-limpar"
+                    >
+                        Limpar
+                    </a>
+
+                    <a
+                        href="{{ url_for(
+                            'relatorios.gerencial_pdf',
+                            data_inicio=data_inicio_str,
+                            data_fim=data_fim_str
+                        ) }}"
+                        class="btn-acao-exportar"
+                    >
+                        📄 Exportar relatório
+                    </a>
+                </div>
+            </form>
+
+            <p class="gerencial-aviso-periodo">
+                O período selecionado é aplicado às movimentações
+                e Ordens de Serviço. Estoque e calibrações
+                representam a situação atual.
+            </p>
+            
+            <!-- ESTOQUE -->
+            <div class="gerencial-secao">
+
+                <h2>📦 Materiais e Estoque</h2>
+
+                <div class="gerencial-indicadores">
+
+                    <div class="gerencial-card">
+                        <h3>Materiais ativos</h3>
+                        <strong>{{ total_materiais }}</strong>
+                    </div>
+
+                    <div class="gerencial-card alerta">
+                        <h3>Estoque baixo</h3>
+                        <strong>{{ estoque_baixo }}</strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- MOVIMENTAÇÕES -->
+            <div class="gerencial-secao">
+
+                <h2>📋 Movimentações de Materiais</h2>
+
+                <div class="gerencial-indicadores">
+
+                    <div class="gerencial-card">
+                        <h3>Total de movimentações</h3>
+                        <strong>{{ total_movimentacoes }}</strong>
+                    </div>
+
+                    <div class="gerencial-card entrada">
+                        <h3>Entradas</h3>
+                        <strong>{{ total_entradas }}</strong>
+                    </div>
+
+                    <div class="gerencial-card saida">
+                        <h3>Saídas</h3>
+                        <strong>{{ total_saidas }}</strong>
+                    </div>
+
+                    <div class="gerencial-card retorno">
+                        <h3>Retornos</h3>
+                        <strong>{{ total_retornos }}</strong>
+                    </div>
+
+                    <div class="gerencial-card consumo">
+                        <h3>Consumos</h3>
+                        <strong>{{ total_consumos }}</strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- ORDENS DE SERVIÇO -->
+            <div class="gerencial-secao">
+
+                <h2>📄 Ordens de Serviço</h2>
+
+                <div class="gerencial-indicadores">
+
+                    <div class="gerencial-card">
+                        <h3>Total de OS</h3>
+                        <strong>{{ total_os }}</strong>
+                    </div>
+
+                    <div class="gerencial-card alerta">
+                        <h3>OS abertas</h3>
+                        <strong>{{ os_abertas }}</strong>
+                    </div>
+
+                    <div class="gerencial-card entrada">
+                        <h3>OS encerradas</h3>
+                        <strong>{{ os_encerradas }}</strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- CALIBRAÇÕES -->
+            <div class="gerencial-secao">
+
+                <h2>🛠️ Controle de Calibrações</h2>
+
+                <div class="gerencial-indicadores">
+
+                    <div class="gerencial-card">
+                        <h3>Equipamentos</h3>
+                        <strong>{{ total_equipamentos }}</strong>
+                    </div>
+
+                    <div class="gerencial-card entrada">
+                        <h3>Regulares</h3>
+                        <strong>{{ calibracoes_regulares }}</strong>
+                    </div>
+
+                    <div class="gerencial-card proxima">
+                        <h3>Próximas do vencimento</h3>
+                        <strong>{{ calibracoes_proximas }}</strong>
+                    </div>
+
+                    <div class="gerencial-card alerta">
+                        <h3>Vencidas</h3>
+                        <strong>{{ calibracoes_vencidas }}</strong>
+                    </div>
+
+                    <div class="gerencial-card alerta">
+                        <h3>Pendentes</h3>
+                        <strong>{{ calibracoes_pendentes }}</strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<style>
+
+/* SEÇÕES DO RELATÓRIO */
+
+.gerencial-secao {
+    margin: 25px 0;
+}
+
+.gerencial-secao h2 {
+    font-size: 18px;
+    color: #1f2937;
+    margin-bottom: 15px;
+}
+
+/* INDICADORES */
+
+.gerencial-indicadores {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 15px;
+}
+
+.gerencial-card {
+    background: #ffffff;
+    padding: 20px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    min-width: 0;
+}
+
+.gerencial-card h3 {
+    font-size: 13px;
+    color: #6b7280;
+    margin: 0 0 12px;
+}
+
+.gerencial-card strong {
+    font-size: 28px;
+    color: #1f2937;
+}
+
+.gerencial-card.entrada strong {
+    color: #15803d;
+}
+
+.gerencial-card.saida strong {
+    color: #2563eb;
+}
+
+.gerencial-card.retorno strong {
+    color: #0891b2;
+}
+
+.gerencial-card.consumo strong {
+    color: #7c3aed;
+}
+
+.gerencial-card.proxima strong {
+    color: #b45309;
+}
+
+.gerencial-card.alerta strong {
+    color: #b91c1c;
+}
+
+/* BOTÃO VOLTAR */
+
+.btn-voltar-gerencial {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 15px;
+    background: #2563eb;
+    color: #ffffff !important;
+    border-radius: 6px;
+    text-decoration: none !important;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.btn-voltar-gerencial:hover {
+    background: #1d4ed8;
+}
+
+/* FILTROS DO RELATÓRIO GERENCIAL */
+
+.filtros-gerencial {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 10px;
+    width: 100%;
+}
+
+.filtro-gerencial-campo {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.btn-filtrar-gerencial,
+.btn-limpar-gerencial,
+.btn-exportar-gerencial {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: auto;
+    height: 40px;
+    padding: 0 15px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    text-decoration: none !important;
+    box-sizing: border-box;
+}
+
+.btn-exportar-gerencial {
+    background: #c81919;
+    color: #ffffff !important;
+}
+
+.btn-exportar-gerencial:hover {
+    background: #a91515;
+}
+
+@media (max-width: 950px) {
+    .filtros-gerencial {
+        flex-wrap: wrap;
+    }
+
+    .filtro-gerencial-campo {
+        flex: 1 1 220px;
+    }
+}
+
+/* BOTÃO FILTRAR */
+
+.btn-filtrar-gerencial {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: auto;
+    height: 40px;
+    padding: 0 20px;
+    background: #1f4e79;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-filtrar-gerencial:hover {
+    background: #1d4ed8;
+}
+
+/* BOTÃO LIMPAR */
+
+.btn-limpar-gerencial {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: auto;
+    height: 40px;
+    padding: 0 20px;
+    background: #e5e7eb;
+    color: #374151 !important;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none !important;
+    cursor: pointer;
+}
+
+.btn-limpar-gerencial:hover {
+    background: #d1d5db;
+}
+
+.gerencial-aviso-periodo {
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 20px;
+}
+
+.btn-relatorio-pdf {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 0 16px;
+    background: #b91c1c;
+    color: white !important;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none !important;
+}
+
+.btn-relatorio-pdf:hover {
+    background: #991b1b;
+}
+
+/* ALINHAMENTO PADRÃO DOS FILTROS CATENA */
+
+.filtros-calibracao,
+.filtros-gerencial {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px;
+    width: 100%;
+    margin: 20px 0 12px;
+}
+
+/* CAMPOS DE PESQUISA */
+
+.filtros-calibracao .filtro-campo,
+.filtros-gerencial .filtro-gerencial-campo {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 220px;
+    min-width: 180px;
+    gap: 6px;
+}
+
+.filtros-calibracao .filtro-campo input,
+.filtros-calibracao .filtro-campo select,
+.filtros-gerencial .filtro-gerencial-campo input {
+    display: block;
+    width: 100%;
+    height: 40px;
+    box-sizing: border-box;
+}
+
+/* GRUPO DE BOTÕES */
+
+.acoes-filtros {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+    gap: 10px;
+}
+
+.btn-acao-filtrar,
+.btn-acao-limpar,
+.btn-acao-exportar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: auto;
+    height: 40px;
+    box-sizing: border-box;
+    padding: 0 15px;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    text-decoration: none !important;
+    cursor: pointer;
+}
+
+.btn-acao-filtrar {
+    background: #1f4e79;
+    color: #ffffff;
+}
+
+.btn-acao-filtrar:hover {
+    background: #163a5b;
+}
+
+.btn-acao-limpar {
+    background: #e5e7eb;
+    color: #374151 !important;
+}
+
+.btn-acao-limpar:hover {
+    background: #d1d5db;
+}
+
+.btn-acao-exportar {
+    background: #c81919;
+    color: #ffffff !important;
+}
+
+.btn-acao-exportar:hover {
+    background: #a91515;
+}
+
+@media (max-width: 1050px) {
+    .acoes-filtros {
+        flex-wrap: wrap;
+    }
+}
+
+/* RESPONSIVIDADE */
+
+@media (max-width: 1200px) {
+    .gerencial-indicadores {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 800px) {
+    .gerencial-indicadores {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 500px) {
+    .gerencial-indicadores {
+        grid-template-columns: 1fr;
+    }
+}
+
+</style>
+
+{% endblock %}

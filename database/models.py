@@ -174,10 +174,39 @@ class Material(db.Model):
         nullable=True
     )
 
+    numero_serie = db.Column(
+        db.String(100),
+        unique=True,
+        nullable=True
+    )
+
     ativo = db.Column(
         db.Boolean,
         default=True,
         nullable=False
+    )
+
+    # CONTROLE DE CALIBRAÇÃO
+
+    requer_calibracao = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=False
+    )
+
+    data_ultima_calibracao = db.Column(
+        db.Date,
+        nullable=True
+    )
+
+    validade_calibracao = db.Column(
+        db.Date,
+        nullable=True
+    )
+
+    numero_certificado = db.Column(
+        db.String(100),
+        nullable=True
     )
 
     criado_em = db.Column(
@@ -417,4 +446,184 @@ class SequenciaOS(db.Model):
         db.Integer,
         nullable=False,
         default=0
+    )
+
+# ============================================================
+# HISTÓRICO DE CALIBRAÇÕES DOS EQUIPAMENTOS
+# ============================================================
+
+class HistoricoCalibracao(db.Model):
+
+    __tablename__ = "historico_calibracoes"
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    material_id = db.Column(
+        db.Integer,
+        db.ForeignKey("materiais.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True
+    )
+
+    data_calibracao = db.Column(
+        db.Date,
+        nullable=False
+    )
+
+    validade_calibracao = db.Column(
+        db.Date,
+        nullable=False,
+        index=True
+    )
+
+    numero_certificado = db.Column(
+        db.String(100),
+        nullable=True
+    )
+
+    laboratorio = db.Column(
+        db.String(150),
+        nullable=True
+    )
+
+    observacoes = db.Column(
+        db.Text,
+        nullable=True
+    )
+
+    usuario_id = db.Column(
+        db.Integer,
+        db.ForeignKey("usuarios.id", ondelete="SET NULL"),
+        nullable=True
+    )
+
+    registrado_em = db.Column(
+        db.DateTime,
+        nullable=False,
+        server_default=db.func.current_timestamp()
+    )
+
+    # Relacionamento com o equipamento
+    material = db.relationship(
+        "Material",
+        backref=db.backref(
+            "historico_calibracoes",
+            lazy="dynamic"
+        )
+    )
+
+    # Relacionamento com o usuário que registrou
+    usuario = db.relationship(
+        "Usuario"
+    )
+
+    def __repr__(self):
+        return (
+            f"<HistoricoCalibracao "
+            f"id={self.id} "
+            f"material_id={self.material_id}>"
+        )
+
+# =====================================================
+# LISTAS DE MATERIAIS — CATENA ENGENHARIA
+# =====================================================
+
+class ListaModelo(db.Model):
+
+    __tablename__ = "listas_modelo"
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    nome = db.Column(
+        db.String(150),
+        nullable=False
+    )
+
+    descricao = db.Column(
+        db.Text,
+        nullable=True
+    )
+
+    ativo = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=True
+    )
+
+    usuario_id = db.Column(
+        db.Integer,
+        db.ForeignKey("usuarios.id", ondelete="SET NULL"),
+        nullable=True
+    )
+
+    criado_em = db.Column(
+        db.DateTime,
+        nullable=False,
+        server_default=db.func.current_timestamp()
+    )
+
+    usuario = db.relationship(
+        "Usuario",
+        backref="listas_modelo"
+    )
+
+    itens = db.relationship(
+        "ListaModeloItem",
+        back_populates="lista",
+        cascade="all, delete-orphan"
+    )
+
+
+class ListaModeloItem(db.Model):
+
+    __tablename__ = "listas_modelo_itens"
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    lista_id = db.Column(
+        db.Integer,
+        db.ForeignKey("listas_modelo.id", ondelete="CASCADE"),
+        nullable=False
+    )
+
+    material_id = db.Column(
+        db.Integer,
+        db.ForeignKey("materiais.id", ondelete="RESTRICT"),
+        nullable=False
+    )
+
+    quantidade = db.Column(
+        db.Numeric(12, 3),
+        nullable=False
+    )
+
+    lista = db.relationship(
+        "ListaModelo",
+        back_populates="itens"
+    )
+
+    material = db.relationship(
+        "Material",
+        backref="itens_listas_modelo"
+    )
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "lista_id",
+            "material_id",
+            name="uq_lista_material"
+        ),
+        db.CheckConstraint(
+            "quantidade > 0",
+            name="chk_lista_quantidade"
+        ),
     )

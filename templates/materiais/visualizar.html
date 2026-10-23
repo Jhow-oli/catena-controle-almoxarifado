@@ -6,31 +6,46 @@
 
     <div class="form-card material-view-card">
 
-        <div class="sidebar-logo"> 
-                <img 
-                    src="{{ url_for('static', filename='img/Catena logo.jpg') }}"
-                    alt="Catena Engenharia" 
-                    >  
-            </div>
+        <!-- LOGO CATENA -->
+        <div class="sidebar-logo">
+            <img
+                src="{{ url_for('static', filename='img/Catena logo.jpg') }}"
+                alt="Catena Engenharia"
+            >
+        </div>
 
-        <!-- NOME DO EMPRESA --> 
-             
-            <header class="sidebar-logo"> 
-                
-                <div> 
-                    CATENA ENGENHARIA 
-                </div>
-            </header>
+        <header class="sidebar-logo">
+            <div>CATENA ENGENHARIA</div>
+        </header>
+
+        <h1>{{ material.nome }}</h1>
+
+        {% if current_user.is_authenticated and current_user.perfil == "ADMIN" %}
+
+        <div style="margin: 15px 0;">
+
+            <a
+                href="{{ url_for('materiais.calibracoes_pdf', id=material.id) }}"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="button-small"
+            >
+                Imprimir PDF
+            </a>
+
+            <a
+                href="{{ url_for('materiais.registrar_calibracao', id=material.id) }}"
+                class="button-small"
+                style="margin-left: 8px;"
+            >
+                🛠️ Registrar nova calibração
+            </a>
 
         </div>
 
-        <h1>
-            {{ material.nome }}
-        </h1>
+        {% endif %}
 
-        <p>
-            Informações do material
-        </p>
+        <p>Informações do material</p>
 
         <hr>
 
@@ -43,45 +58,139 @@
 
             <div>
                 <strong>Descrição</strong>
-                <span>
-                    {{ material.descricao or "-" }}
-                </span>
+                <span>{{ material.descricao or "-" }}</span>
             </div>
 
             <div>
                 <strong>Unidade</strong>
-                <span>
-                    {{ material.unidade }}
-                </span>
+                <span>{{ material.unidade }}</span>
             </div>
 
             <div>
                 <strong>Localização</strong>
-                <span>
-                    {{ material.localizacao or "-" }}
-                </span>
+                <span>{{ material.localizacao or "-" }}</span>
+            </div>
+
+            <div>
+                <strong>Número de série</strong>
+                <span>{{ material.numero_serie or "-" }}</span>
             </div>
 
             <div>
                 <strong>Status</strong>
 
                 {% if material.ativo %}
-
-                    <span class="status-active">
-                        Ativo
-                    </span>
-
+                    <span class="status-active">Ativo</span>
                 {% else %}
-
-                    <span class="status-inactive">
-                        Inativo
-                    </span>
-
+                    <span class="status-inactive">Inativo</span>
                 {% endif %}
-
             </div>
 
         </div>
+
+        <!-- CALIBRAÇÃO ATUAL -->
+        {% if material.requer_calibracao %}
+
+        <hr>
+
+        <h2>Calibração atual</h2>
+
+        <div class="material-info">
+
+            <div>
+                <strong>Última calibração</strong>
+                <span>
+                    {{ material.data_ultima_calibracao.strftime('%d/%m/%Y')
+                       if material.data_ultima_calibracao else "-" }}
+                </span>
+            </div>
+
+            <div>
+                <strong>Validade</strong>
+                <span>
+                    {{ material.validade_calibracao.strftime('%d/%m/%Y')
+                       if material.validade_calibracao else "-" }}
+                </span>
+            </div>
+
+            <div>
+                <strong>Certificado</strong>
+                <span>{{ material.numero_certificado or "-" }}</span>
+            </div>
+
+        </div>
+
+        {% endif %}
+
+        <!-- HISTÓRICO DE CALIBRAÇÕES -->
+        {% if material.requer_calibracao or historico_calibracoes %}
+
+        <hr>
+
+        <h2>Histórico de calibrações</h2>
+
+        {% if historico_calibracoes %}
+
+        <div style="overflow-x: auto; width: 100%;">
+
+            <table class="table" style="width: 100%;">
+
+                <thead>
+                    <tr>
+                        <th>Data da calibração</th>
+                        <th>Validade</th>
+                        <th>Certificado</th>
+                        <th>Laboratório</th>
+                        <th>Registrado por</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for registro in historico_calibracoes %}
+
+                    <tr>
+
+                        <td>
+                            {{ registro.data_calibracao.strftime('%d/%m/%Y') }}
+                        </td>
+
+                        <td>
+                            {{ registro.validade_calibracao.strftime('%d/%m/%Y') }}
+                        </td>
+
+                        <td>
+                            {{ registro.numero_certificado or "-" }}
+                        </td>
+
+                        <td>
+                            {{ registro.laboratorio or "-" }}
+                        </td>
+
+                        <td>
+                            {{ registro.usuario.nome
+                               if registro.usuario else "-" }}
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% else %}
+
+            <p>
+                Nenhum histórico de calibração registrado.
+            </p>
+
+        {% endif %}
+
+        {% endif %}
 
     </div>
 

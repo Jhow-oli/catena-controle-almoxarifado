@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from zoneinfo import ZoneInfo
 from sqlalchemy import text, func
 
@@ -57,6 +57,29 @@ movimentacoes_bp = Blueprint(
     __name__,
     url_prefix="/movimentacoes"
 )
+
+def verificar_calibracao(material):
+    """
+    Retorna a situação da calibração do material.
+    """
+
+    if not material.requer_calibracao:
+        return "NAO_APLICAVEL"
+
+    if material.validade_calibracao is None:
+        return "BLOQUEADO"
+
+    hoje = datetime.now(
+        ZoneInfo("America/Sao_Paulo")
+    ).date()
+
+    if material.validade_calibracao < hoje:
+        return "VENCIDA"
+
+    if material.validade_calibracao <= hoje + timedelta(days=30):
+        return "PROXIMA_VENCIMENTO"
+
+    return "REGULAR"
 
 def gerar_numero_os_saida():
     """
@@ -300,6 +323,12 @@ def nova():
             "unidade": material.unidade,
             "quantidade": float(
                 material.quantidade
+            ),
+            "requer_calibracao": bool(material.requer_calibracao),
+            "validade_calibracao": (
+                material.validade_calibracao.isoformat()
+                if material.validade_calibracao
+                else None
             )
         })
 
@@ -1163,6 +1192,32 @@ def nova():
             # ---------------------------------------------
 
             if tipo == "SAIDA":
+
+                # VERIFICA CALIBRAÇÃO ANTES DA SAÍDA
+                situacao = verificar_calibracao(material)
+
+                if situacao in ["BLOQUEADO", "VENCIDA"]:
+
+                    db.session.rollback()
+
+                    flash(
+                        f"Saída bloqueada para '{material.nome}'. "
+                        f"O equipamento está com calibração "
+                        f"vencida ou sem validade cadastrada. "
+                        f"Atualize a calibração antes de utilizá-lo.",
+                        "danger"
+                    )
+
+                    return render_template(
+                        "movimentacoes/form.html",
+                        colaboradores=colaboradores,
+                        veiculos=veiculos,
+                        materiais=materiais,
+                        materiais_json=materiais_json,
+                        saidas_json=saidas_json,
+                        chave_idempotencia=chave_idempotencia,
+                        dados_formulario=dados_formulario
+                    )
 
                 estoque_atual = Decimal(
                     material.quantidade
